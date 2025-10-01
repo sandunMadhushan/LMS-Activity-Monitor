@@ -51,7 +51,20 @@ class MoodleScraper:
         chrome_options.add_argument('--window-size=1920,1080')
         chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         
-        service = Service(ChromeDriverManager().install())
+        # Try to use system chromedriver first (for CI environments), fallback to webdriver_manager
+        try:
+            # Check if chromedriver is in PATH (CI environment)
+            import shutil
+            if shutil.which('chromedriver'):
+                print("Using system ChromeDriver")
+                service = Service('chromedriver')
+            else:
+                print("Using ChromeDriverManager")
+                service = Service(ChromeDriverManager().install())
+        except Exception as e:
+            print(f"Error detecting ChromeDriver, using ChromeDriverManager: {e}")
+            service = Service(ChromeDriverManager().install())
+        
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
         self.driver.implicitly_wait(10)
     
