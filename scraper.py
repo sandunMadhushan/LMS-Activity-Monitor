@@ -24,6 +24,7 @@ if sys.platform == 'win32':
 
 from database import Database
 from notifier import Notifier
+from calendar_scraper import CalendarScraper
 
 load_dotenv()
 
@@ -35,6 +36,7 @@ class MoodleScraper:
         self.driver = None
         self.db = Database()
         self.notifier = Notifier()
+        self.calendar_scraper = CalendarScraper()
     
     def setup_driver(self):
         """Setup Selenium WebDriver."""
@@ -62,6 +64,40 @@ class MoodleScraper:
         """Generate a unique ID for an activity."""
         unique_string = f"{course_id}_{title}_{activity_type}"
         return hashlib.md5(unique_string.encode()).hexdigest()
+    
+    def _extract_and_store_deadline(self, activity_id: str, course_id: str, 
+                                    title: str, description: str, lms_name: str):
+        """Extract deadline from activity text and store in deadlines table."""
+        try:
+            # Combine title and description for searching
+            search_text = f"{title} {description or ''}"
+            
+            # Extract dates using calendar scraper's method
+            extracted_dates = self.calendar_scraper.extract_dates_from_text(search_text)
+            
+            if extracted_dates:
+                # Use the first/earliest extracted date
+                deadline_date = extracted_dates[0]
+                
+                # Generate unique deadline ID
+                deadline_id = f"scraped_{activity_id}_{deadline_date.isoformat()}"
+                
+                # Store in deadlines table
+                self.db.add_deadline(
+                    deadline_id=deadline_id,
+                    title=title,
+                    description=description or '',
+                    deadline_date=deadline_date.isoformat(),
+                    lms_name=lms_name,
+                    course_id=course_id,
+                    activity_id=activity_id,
+                    source='scraped',
+                    location=''
+                )
+                print(f"      📅 Deadline extracted: {deadline_date.strftime('%Y-%m-%d')}")
+        except Exception as e:
+            # Silently fail - deadline extraction is optional
+            pass
     
     def scrape_ousl(self) -> Dict[str, Any]:
         """Scrape Open University of Sri Lanka Moodle."""
@@ -247,7 +283,7 @@ class MoodleScraper:
                         self.db.add_course(course_id, 'OUSL', course_name, course_url)
                         
                         # Scrape course activities
-                        activities = self._scrape_course_activities(course_url, course_id)
+                        activities = self._scrape_course_activities(course_url, course_id, 'OUSL')
                         
                         courses.append({
                             'course_id': course_id,
@@ -323,7 +359,7 @@ class MoodleScraper:
                         self.db.add_course(course_id, 'OUSL', course_name, course_url)
                         
                         # Scrape course activities
-                        activities = self._scrape_course_activities(course_url, course_id)
+                        activities = self._scrape_course_activities(course_url, course_id, 'OUSL')
                         
                         courses.append({
                             'course_id': course_id,
@@ -484,7 +520,7 @@ class MoodleScraper:
                         
                         self.db.add_course(course_id, 'RJTA', course_name, course_url)
                         
-                        activities = self._scrape_course_activities(course_url, course_id)
+                        activities = self._scrape_course_activities(course_url, course_id, 'RJTA')
                         
                         courses.append({
                             'course_id': course_id,
@@ -556,7 +592,7 @@ class MoodleScraper:
                         
                         self.db.add_course(course_id, 'RJTA', course_name, course_url)
                         
-                        activities = self._scrape_course_activities(course_url, course_id)
+                        activities = self._scrape_course_activities(course_url, course_id, 'RJTA')
                         
                         courses.append({
                             'course_id': course_id,
@@ -578,7 +614,7 @@ class MoodleScraper:
         
         return courses
     
-    def _scrape_course_activities(self, course_url: str, course_id: str) -> List[Dict[str, Any]]:
+    def _scrape_course_activities(self, course_url: str, course_id: str, lms_name: str = 'OUSL') -> List[Dict[str, Any]]:
         """Scrape all activities from a course page."""
         activities = []
         
@@ -654,6 +690,15 @@ class MoodleScraper:
                         description=description,
                         url=url,
                         deadline=deadline
+                    )
+                    
+                    # Extract deadline dates from title and description
+                    self._extract_and_store_deadline(
+                        activity_id=activity_id,
+                        course_id=course_id,
+                        title=title,
+                        description=description,
+                        lms_name=lms_name
                     )
                     
                     if is_new:

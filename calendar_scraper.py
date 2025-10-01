@@ -65,51 +65,84 @@ class CalendarScraper:
         return all_events
     
     def extract_dates_from_text(self, text: str) -> List[datetime]:
-        """Extract dates from activity descriptions."""
+        """Extract dates from activity descriptions.
+        Returns a list of dates found, with the latest date first (usually the deadline).
+        """
         dates = []
+        seen_dates = set()  # Track unique dates
         
         if not text:
             return dates
         
-        # Pattern 1: "by 15th October 2025", "before 20-10-2025", "due on 2025-10-15"
-        patterns = [
-            r'(?:by|before|due on|due|deadline|submit by)\s+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD-MM-YYYY or DD/MM/YYYY
-            r'(?:by|before|due on|due|deadline|submit by)\s+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY-MM-DD
-            r'(?:by|before|due on|due|deadline|submit by)\s+(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})',  # 15th October 2025
+        # Pattern 1-3: With keywords like "by", "due", "deadline", etc. (higher priority)
+        priority_patterns = [
+            r'(?:by|before|due on|due|deadline|submit by)\s*:?\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)?,?\s*(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD-MM-YYYY or DD/MM/YYYY
+            r'(?:by|before|due on|due|deadline|submit by)\s*:?\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)?,?\s*(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY-MM-DD
+            r'(?:by|before|due on|due|deadline|submit by)\s*:?\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)?,?\s*(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})',  # 15th October 2025 or Due:Sunday, 19 October 2025
+            r'(?:deadline|due date)\s*:\s*(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # "deadline: YYYY-MM-DD"
         ]
         
-        for pattern in patterns:
+        # First, try priority patterns (with keywords)
+        for pattern in priority_patterns:
             matches = re.finditer(pattern, text, re.IGNORECASE)
             for match in matches:
                 try:
                     groups = match.groups()
-                    
-                    # Try to parse the date
-                    if len(groups) == 3:
-                        if groups[0].isdigit() and groups[1].isdigit() and len(groups[2]) == 4:
-                            # DD-MM-YYYY or YYYY-MM-DD
-                            if len(groups[0]) == 4:  # YYYY-MM-DD
-                                date = datetime(int(groups[0]), int(groups[1]), int(groups[2]), tzinfo=timezone.utc)
-                            else:  # DD-MM-YYYY
-                                date = datetime(int(groups[2]), int(groups[1]), int(groups[0]), tzinfo=timezone.utc)
-                            dates.append(date)
-                        elif groups[1].isalpha():  # 15th October 2025
-                            # Parse month name
-                            months = {
-                                'january': 1, 'february': 2, 'march': 3, 'april': 4,
-                                'may': 5, 'june': 6, 'july': 7, 'august': 8,
-                                'september': 9, 'october': 10, 'november': 11, 'december': 12,
-                                'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-                                'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
-                            }
-                            month = months.get(groups[1].lower())
-                            if month:
-                                date = datetime(int(groups[2]), month, int(groups[0]), tzinfo=timezone.utc)
-                                dates.append(date)
+                    date = self._parse_date_groups(groups)
+                    if date and date not in seen_dates:
+                        dates.append(date)
+                        seen_dates.add(date)
                 except (ValueError, IndexError):
                     continue
         
+        # If no priority patterns matched, try standalone dates
+        if not dates:
+            standalone_patterns = [
+                r'\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b',  # YYYY-MM-DD or YYYY/MM/DD
+            ]
+            
+            for pattern in standalone_patterns:
+                matches = re.finditer(pattern, text, re.IGNORECASE)
+                for match in matches:
+                    try:
+                        groups = match.groups()
+                        date = self._parse_date_groups(groups)
+                        if date and date not in seen_dates:
+                            dates.append(date)
+                            seen_dates.add(date)
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Sort by date (latest first - usually the deadline)
+        dates.sort(reverse=True)
+        
         return dates
+    
+    def _parse_date_groups(self, groups) -> datetime:
+        """Parse date from regex groups."""
+        if len(groups) != 3:
+            return None
+        
+        if groups[0].isdigit() and groups[1].isdigit() and groups[2].isdigit():
+            # Determine format based on first group length
+            if len(groups[0]) == 4:  # YYYY-MM-DD
+                return datetime(int(groups[0]), int(groups[1]), int(groups[2]), tzinfo=timezone.utc)
+            elif len(groups[2]) == 4:  # DD-MM-YYYY
+                return datetime(int(groups[2]), int(groups[1]), int(groups[0]), tzinfo=timezone.utc)
+        elif groups[1].isalpha():  # 15th October 2025
+            # Parse month name
+            months = {
+                'january': 1, 'february': 2, 'march': 3, 'april': 4,
+                'may': 5, 'june': 6, 'july': 7, 'august': 8,
+                'september': 9, 'october': 10, 'november': 11, 'december': 12,
+                'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+                'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+            }
+            month = months.get(groups[1].lower())
+            if month:
+                return datetime(int(groups[2]), month, int(groups[0]), tzinfo=timezone.utc)
+        
+        return None
 
 if __name__ == "__main__":
     scraper = CalendarScraper()

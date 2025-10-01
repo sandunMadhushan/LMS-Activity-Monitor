@@ -41,6 +41,21 @@ def index():
     # Fetch all upcoming deadlines (no time limit) and filter on frontend
     upcoming_deadlines = db.get_all_upcoming_deadlines(days_ahead=365)
     
+    # Try to match calendar/scraped events with courses by course code in title
+    import re
+    for deadline in upcoming_deadlines:
+        if deadline['source'] in ['calendar', 'scraped'] and not deadline.get('course_name'):
+            # Try to extract course code from title (e.g., "EEI4362", "AGM4367")
+            course_code_match = re.search(r'\b([A-Z]{2,4}\d{4})\b', deadline['title'])
+            if course_code_match:
+                course_code = course_code_match.group(1)
+                # Try to find matching course
+                courses = db.get_all_courses()
+                for course in courses:
+                    if course_code in course['course_name']:
+                        deadline['course_name'] = course['course_name']
+                        break
+    
     return render_template('index.html', 
                           stats=stats,
                           recent_activities=recent_activities,
