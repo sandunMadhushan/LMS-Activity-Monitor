@@ -1,0 +1,57 @@
+services:
+  # Web Service (Flask Dashboard)
+  - type: web
+    name: lms-scraper-dashboard
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OUSL_USERNAME
+        sync: false
+      - key: OUSL_PASSWORD
+        sync: false
+      - key: RUSL_USERNAME
+        sync: false
+      - key: RUSL_PASSWORD
+        sync: false
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_RECIPIENT
+        sync: false
+      - key: SMTP_SERVER
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+    
+  # Cron Job (Scheduled Scraper)
+  - type: cron
+    name: lms-scraper-job
+    env: python
+    schedule: "0 1,13 * * *"  # Run at 1 AM and 1 PM UTC daily
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python scraper.py --headless True"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OUSL_USERNAME
+        sync: false
+      - key: OUSL_PASSWORD
+        sync: false
+      - key: RUSL_USERNAME
+        sync: false
+      - key: RUSL_PASSWORD
+        sync: false
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_RECIPIENT
+        sync: false
+      - key: SMTP_SERVER
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587

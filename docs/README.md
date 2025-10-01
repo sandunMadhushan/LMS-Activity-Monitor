@@ -6,6 +6,9 @@ This folder contains all project documentation.
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Complete getting started guide
 - **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed setup instructions
 
+## Deployment & Hosting
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deploy to cloud platforms (Render, Railway, DigitalOcean, etc.)
+
 ## Configuration & Usage
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference for common tasks
 - **[SCHEDULING.md](SCHEDULING.md)** - How automatic scheduling works
