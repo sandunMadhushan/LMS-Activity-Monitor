@@ -1,6 +1,12 @@
-{% ext      <button
+{% extends "base.html" %} {% block title %}Dashboard - LMS Activity Monitor{%
+endblock %} {% block content %}
+<div class="dashboard">
+  <div class="page-header">
+    <h1>📊 Dashboard</h1>
+    <div class="actions">
+      <button
         onclick="syncCalendar()"
-        class="btn btn-success"
+        class="btn btn-primary"
         title="Auto-syncs daily at 9 AM & 9 PM"
       >
         <i class="fas fa-calendar-check"></i> Sync Calendar
@@ -15,25 +21,6 @@
         <i class="fas fa-sync"></i> Run Scan Now
       </button>
       {% endif %}
-      <button onclick="testEmail()" class="btn btn-secondary">
-        <i class="fas fa-envelope"></i> Test Email
-      </button>l" %} {% block title %}Dashboard - LMS Activity Monitor{%
-endblock %} {% block content %}
-<div class="dashboard">
-  <div class="page-header">
-    <h1>📊 Dashboard</h1>
-    <div class="actions">
-      <button
-        onclick="syncCalendar()"
-        class="btn btn-primary"
-        title="Auto-syncs daily at 9 AM & 9 PM"
-      >
-        <i class="fas fa-calendar-check"></i> Sync Calendar
-        <span style="font-size: 0.7em; opacity: 0.8">🕒 Auto</span>
-      </button>
-      <button onclick="triggerScan()" class="btn btn-primary">
-        <i class="fas fa-sync"></i> Run Scan Now
-      </button>
       <button onclick="testEmail()" class="btn btn-secondary">
         <i class="fas fa-envelope"></i> Test Email
       </button>
