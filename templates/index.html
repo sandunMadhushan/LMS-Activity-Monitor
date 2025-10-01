@@ -66,6 +66,12 @@ endblock %} {% block content %}
     </div>
   </div>
 
+  <!-- Scheduler Info -->
+  <div class="alert alert-success" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+    <i class="fas fa-clock"></i>
+    <strong>📅 Automatic Calendar Sync:</strong> Calendar events are automatically synced daily at <strong>9:00 AM</strong> and <strong>9:00 PM</strong>.
+  </div>
+
   {% if stats.new_activities > 0 %}
   <div class="alert alert-info">
     <i class="fas fa-info-circle"></i>
@@ -77,21 +83,29 @@ endblock %} {% block content %}
   <!-- Upcoming Deadlines Section - Tabbed by University -->
   {% if upcoming_deadlines %}
   <div class="card deadline-card">
-    <div class="card-header">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h2><i class="fas fa-exclamation-triangle"></i> Upcoming Deadlines</h2>
+      <div class="deadline-filter">
+        <button class="filter-btn active" onclick="filterDeadlines(30)" data-days="30">
+          <i class="fas fa-calendar-day"></i> Next 30 Days
+        </button>
+        <button class="filter-btn" onclick="filterDeadlines(0)" data-days="0">
+          <i class="fas fa-calendar"></i> All Upcoming
+        </button>
+      </div>
     </div>
     <div class="card-body">
       <!-- Tabs for OUSL and RJTA -->
       <div class="tabs">
         <button class="tab-button active" onclick="switchDeadlineTab(event, 'ousl-deadlines')">
           <i class="fas fa-university"></i> OUSL
-          <span class="tab-count">
+          <span class="tab-count" id="ousl-count">
             {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'OUSL')|list|length }}
           </span>
         </button>
         <button class="tab-button" onclick="switchDeadlineTab(event, 'rjta-deadlines')">
           <i class="fas fa-university"></i> RJTA
-          <span class="tab-count">
+          <span class="tab-count" id="rjta-count">
             {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'RJTA')|list|length }}
           </span>
         </button>
@@ -102,7 +116,7 @@ endblock %} {% block content %}
         <div class="deadline-list">
           {% for activity in upcoming_deadlines %}
           {% if activity.lms_name == 'OUSL' %}
-          <div class="deadline-item {% if activity.is_new %}new{% endif %}">
+          <div class="deadline-item {% if activity.is_new %}new{% endif %}" data-deadline-date="{{ activity.deadline_date }}">
             <div class="deadline-date">
               <div class="date-icon">
                 <i class="fas fa-calendar-alt"></i>
@@ -154,7 +168,7 @@ endblock %} {% block content %}
         <div class="deadline-list">
           {% for activity in upcoming_deadlines %}
           {% if activity.lms_name == 'RJTA' %}
-          <div class="deadline-item {% if activity.is_new %}new{% endif %}">
+          <div class="deadline-item {% if activity.is_new %}new{% endif %}" data-deadline-date="{{ activity.deadline_date }}">
             <div class="deadline-date">
               <div class="date-icon">
                 <i class="fas fa-calendar-alt"></i>
@@ -478,6 +492,50 @@ endblock %} {% block content %}
 
     document.getElementById(tabName).classList.add("active");
     evt.currentTarget.classList.add("active");
+  }
+
+  function filterDeadlines(days) {
+    // Get all filter buttons
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => {
+      btn.classList.remove('active');
+      if (parseInt(btn.getAttribute('data-days')) === days) {
+        btn.classList.add('active');
+      }
+    });
+
+    // Get all deadline items
+    const deadlineItems = document.querySelectorAll('.deadline-item');
+    let ouslCount = 0;
+    let rjtaCount = 0;
+    
+    const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+    deadlineItems.forEach(item => {
+      const deadlineDate = new Date(item.getAttribute('data-deadline-date'));
+      const lmsName = item.closest('.tab-content').id.includes('ousl') ? 'ousl' : 'rjta';
+      
+      if (days === 0) {
+        // Show all upcoming deadlines
+        item.classList.remove('hidden');
+        if (lmsName === 'ousl') ouslCount++;
+        else rjtaCount++;
+      } else {
+        // Show only deadlines within specified days
+        if (deadlineDate <= thirtyDaysLater) {
+          item.classList.remove('hidden');
+          if (lmsName === 'ousl') ouslCount++;
+          else rjtaCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      }
+    });
+
+    // Update tab counts
+    document.getElementById('ousl-count').textContent = ouslCount;
+    document.getElementById('rjta-count').textContent = rjtaCount;
   }
 
   function showNotification(message, type = "info") {

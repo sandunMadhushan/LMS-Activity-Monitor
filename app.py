@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 import atexit
+import hashlib
 
 from database import Database
 from scraper import MoodleScraper
@@ -37,7 +38,8 @@ def index():
     rjta_activities = db.get_activities_by_lms('RJTA', limit=15)
     
     # Get upcoming deadlines (combined from activities, calendar, and scraped)
-    upcoming_deadlines = db.get_all_upcoming_deadlines(days_ahead=30)
+    # Fetch all upcoming deadlines (no time limit) and filter on frontend
+    upcoming_deadlines = db.get_all_upcoming_deadlines(days_ahead=365)
     
     return render_template('index.html', 
                           stats=stats,
@@ -135,8 +137,17 @@ def sync_calendar():
         
         # Store calendar events in deadlines table
         count = 0
+        within_60_days = 0
+        from datetime import timezone, timedelta
+        now = datetime.now(timezone.utc)
+        sixty_days_later = now + timedelta(days=60)
+        
         for event in events:
-            deadline_id = f"cal_{event['lms']}_{event['date'].isoformat()}_{hash(event['title'])}"
+            # Generate deterministic deadline ID using MD5 hash
+            content = f"{event['lms']}_{event['date'].isoformat()}_{event['title']}"
+            hash_obj = hashlib.md5(content.encode('utf-8'))
+            deadline_id = f"cal_{hash_obj.hexdigest()[:16]}"
+            
             db.add_deadline(
                 deadline_id=deadline_id,
                 title=event['title'],
@@ -147,10 +158,14 @@ def sync_calendar():
                 location=event.get('location', '')
             )
             count += 1
+            
+            # Count events within 60 days
+            if event['date'] <= sixty_days_later:
+                within_60_days += 1
         
         return jsonify({
             'success': True,
-            'message': f'Synced {count} calendar events successfully!'
+            'message': f'Synced {count} calendar events successfully! ({within_60_days} within next 60 days)'
         })
     except Exception as e:
         return jsonify({
