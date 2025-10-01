@@ -8,6 +8,7 @@ This folder contains all project documentation.
 
 ## Deployment & Hosting
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deploy to cloud platforms (Render, Railway, DigitalOcean, etc.)
+- **[HOW_IT_WORKS.md](HOW_IT_WORKS.md)** - How GitHub Actions and Render work together
 
 ## Configuration & Usage
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference for common tasks
