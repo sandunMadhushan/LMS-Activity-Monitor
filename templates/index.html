@@ -54,7 +54,7 @@ endblock %} {% block content %}
       </div>
       <div class="stat-content">
         <h3>
-          {{ stats.last_scan_time|timeago if stats.last_scan_time else 'Never'
+          {{ stats.last_scan_time|timeonly if stats.last_scan_time else 'Never'
           }}
         </h3>
         <p>Last Scan</p>

@@ -140,7 +140,14 @@ def timeago(value):
         except:
             return value
     
-    now = datetime.now()
+    # Ensure value is timezone-aware (assume UTC if naive)
+    if value.tzinfo is None:
+        from datetime import timezone
+        value = value.replace(tzinfo=timezone.utc)
+    
+    # Use UTC time for comparison
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
     diff = now - value
     
     seconds = diff.total_seconds()
@@ -157,7 +164,46 @@ def timeago(value):
         days = int(seconds / 86400)
         return f'{days} day{"s" if days > 1 else ""} ago'
     else:
-        return value.strftime('%Y-%m-%d')
+        # Convert to Asia/Colombo timezone for older dates
+        from datetime import timedelta
+        colombo_tz = timezone(timedelta(hours=5, minutes=30))
+        local_time = value.astimezone(colombo_tz)
+        return local_time.strftime('%Y-%m-%d')
+
+@app.template_filter('timeonly')
+def timeonly(value):
+    """Format datetime showing only time in Asia/Colombo timezone."""
+    if value is None:
+        return ''
+    
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except:
+            return value
+    
+    # Ensure value is timezone-aware (assume UTC if naive)
+    if value.tzinfo is None:
+        from datetime import timezone
+        value = value.replace(tzinfo=timezone.utc)
+    
+    # Convert to Asia/Colombo timezone (GMT+5:30)
+    from datetime import timezone, timedelta
+    colombo_tz = timezone(timedelta(hours=5, minutes=30))
+    local_time = value.astimezone(colombo_tz)
+    
+    # Use UTC time for comparison to determine format
+    now = datetime.now(timezone.utc)
+    diff = now - value
+    seconds = diff.total_seconds()
+    
+    # Show only the actual time in Colombo timezone
+    if seconds < 86400:  # Today
+        return local_time.strftime('%I:%M %p')
+    elif seconds < 604800:  # This week
+        return local_time.strftime('%b %d, %I:%M %p')
+    else:  # Older
+        return local_time.strftime('%b %d, %Y')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
