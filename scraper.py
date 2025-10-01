@@ -56,9 +56,10 @@ class MoodleScraper:
             # Check if chromedriver is in PATH (CI environment)
             import shutil
             import os
-            if shutil.which('chromedriver'):
-                print("Using system ChromeDriver")
-                service = Service('chromedriver')
+            chromedriver_path = shutil.which('chromedriver')
+            if chromedriver_path:
+                print(f"Using system ChromeDriver: {chromedriver_path}")
+                service = Service(chromedriver_path)
             else:
                 print("Using ChromeDriverManager")
                 driver_path = ChromeDriverManager().install()
