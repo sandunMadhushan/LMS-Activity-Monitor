@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LMS Activity Monitor{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="page-header">
+        <h1>📊 Dashboard</h1>
+        <div class="actions">
+            <button onclick="triggerScan()" class="btn btn-primary">
+                <i class="fas fa-sync"></i> Run Scan Now
+            </button>
+            <button onclick="testEmail()" class="btn btn-secondary">
+                <i class="fas fa-envelope"></i> Test Email
+            </button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #667eea;">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_courses }}</h3>
+                <p>Total Courses</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #764ba2;">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_activities }}</h3>
+                <p>Total Activities</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #f093fb;">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="new-activities-count">{{ stats.new_activities }}</h3>
+                <p>New Activities</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #4facfe;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.last_scan_time|timeago if stats.last_scan_time else 'Never' }}</h3>
+                <p>Last Scan</p>
+            </div>
+        </div>
+    </div>
+
+    {% if stats.new_activities > 0 %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>You have {{ stats.new_activities }} new activities!</strong> Check your email or view them below.
+    </div>
+    {% endif %}
+
+    <div class="content-grid">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-history"></i> Recent Activities</h2>
+                <a href="/activities" class="btn btn-small">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="activity-list">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item {% if activity.is_new %}new{% endif %}">
+                        <div class="activity-icon">
+                            {% if activity.activity_type == 'assign' %}
+                            <i class="fas fa-file-alt"></i>
+                            {% elif activity.activity_type == 'quiz' %}
+                            <i class="fas fa-question-circle"></i>
+                            {% elif activity.activity_type == 'resource' %}
+                            <i class="fas fa-file"></i>
+                            {% elif activity.activity_type == 'forum' %}
+                            <i class="fas fa-comments"></i>
+                            {% else %}
+                            <i class="fas fa-book-open"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <span class="activity-type">{{ activity.activity_type }}</span>
+                                {% if activity.is_new %}
+                                <span class="badge badge-new">NEW</span>
+                                {% endif %}
+                            </div>
+                            <h4>{{ activity.title }}</h4>
+                            <p class="activity-course">
+                                <i class="fas fa-book"></i> {{ activity.course_name }}
+                                <span class="lms-badge">{{ activity.lms_name }}</span>
+                            </p>
+                            {% if activity.deadline %}
+                            <p class="activity-deadline">
+                                <i class="fas fa-clock"></i> Deadline: {{ activity.deadline }}
+                            </p>
+                            {% endif %}
+                            <p class="activity-time">{{ activity.first_seen|timeago }}</p>
+                        </div>
+                        {% if activity.url %}
+                        <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
+                            <i class="fas fa-external-link-alt"></i> View
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-state">No activities found yet. Run a scan to get started!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-history"></i> Scan History</h2>
+            </div>
+            <div class="card-body">
+                {% if scan_history %}
+                <div class="scan-history">
+                    {% for scan in scan_history %}
+                    <div class="scan-item">
+                        <div class="scan-time">{{ scan.scan_time|datetime('%b %d, %H:%M') }}</div>
+                        <div class="scan-info">
+                            <strong>{{ scan.lms_name }}</strong>
+                            <span class="scan-stats">
+                                {{ scan.courses_found }} courses, {{ scan.new_activities }} new
+                            </span>
+                        </div>
+                        <div class="scan-status">
+                            {% if scan.status == 'success' %}
+                            <span class="status-success"><i class="fas fa-check-circle"></i></span>
+                            {% else %}
+                            <span class="status-error"><i class="fas fa-times-circle"></i></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-state">No scan history yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="notification" class="notification" style="display: none;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showNotification(message, type = 'info') {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification notification-${type}`;
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
+}
+
+function triggerScan() {
+    showNotification('Starting scan... This may take a few minutes.', 'info');
+    
+    fetch('/api/scan', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Scan failed: ' + error.message, 'error');
+    });
+}
+
+function testEmail() {
+    showNotification('Sending test email...', 'info');
+    
+    fetch('/api/test-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Test failed: ' + error.message, 'error');
+    });
+}
+</script>
+{% endblock %}

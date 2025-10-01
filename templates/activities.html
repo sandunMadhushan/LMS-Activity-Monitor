@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}All Activities - LMS Activity Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📋 All Activities</h1>
+    <p>Showing recent activities across all courses</p>
+</div>
+
+{% if activities %}
+<div class="activities-list">
+    {% for activity in activities %}
+    <div class="activity-list-item {% if activity.is_new %}new{% endif %}">
+        <div class="activity-icon">
+            {% if activity.activity_type == 'assign' %}
+            <i class="fas fa-file-alt"></i>
+            {% elif activity.activity_type == 'quiz' %}
+            <i class="fas fa-question-circle"></i>
+            {% elif activity.activity_type == 'resource' %}
+            <i class="fas fa-file"></i>
+            {% elif activity.activity_type == 'forum' %}
+            <i class="fas fa-comments"></i>
+            {% else %}
+            <i class="fas fa-book-open"></i>
+            {% endif %}
+        </div>
+        <div class="activity-content">
+            <div class="activity-header">
+                <span class="activity-type">{{ activity.activity_type }}</span>
+                {% if activity.is_new %}
+                <span class="badge badge-new">NEW</span>
+                {% endif %}
+            </div>
+            <h3>{{ activity.title }}</h3>
+            <p class="activity-course">
+                <i class="fas fa-book"></i> {{ activity.course_name }}
+                <span class="lms-badge">{{ activity.lms_name }}</span>
+            </p>
+            {% if activity.deadline %}
+            <p class="activity-deadline">
+                <i class="fas fa-clock"></i> Deadline: {{ activity.deadline }}
+            </p>
+            {% endif %}
+            {% if activity.description %}
+            <p class="activity-description">{{ activity.description[:200] }}{% if activity.description|length > 200 %}...{% endif %}</p>
+            {% endif %}
+            <p class="activity-time">{{ activity.first_seen|timeago }}</p>
+        </div>
+        {% if activity.url %}
+        <div class="activity-actions">
+            <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
+                <i class="fas fa-external-link-alt"></i> View
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-large">
+    <i class="fas fa-tasks"></i>
+    <h2>No Activities Found</h2>
+    <p>No activities have been tracked yet. Run a scan to get started!</p>
+    <a href="/" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}

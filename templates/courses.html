@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Courses - LMS Activity Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 My Courses</h1>
+    <div class="filters">
+        <a href="/courses" class="filter-btn {% if not lms_filter %}active{% endif %}">All</a>
+        <a href="/courses?lms=OUSL" class="filter-btn {% if lms_filter == 'OUSL' %}active{% endif %}">OUSL</a>
+        <a href="/courses?lms=RJTA" class="filter-btn {% if lms_filter == 'RJTA' %}active{% endif %}">RJTA</a>
+    </div>
+</div>
+
+{% if courses %}
+<div class="courses-grid">
+    {% for course in courses %}
+    <div class="course-card">
+        <div class="course-header">
+            <div class="lms-badge">{{ course.lms_name }}</div>
+        </div>
+        <div class="course-body">
+            <h3>{{ course.course_name }}</h3>
+            <div class="course-meta">
+                <p><i class="fas fa-clock"></i> Last checked: {{ course.last_checked|timeago }}</p>
+                <p><i class="fas fa-calendar"></i> Added: {{ course.first_seen|datetime('%b %d, %Y') }}</p>
+            </div>
+        </div>
+        <div class="course-footer">
+            <a href="/course/{{ course.course_id }}" class="btn btn-small">
+                <i class="fas fa-eye"></i> View Activities
+            </a>
+            {% if course.course_url %}
+            <a href="{{ course.course_url }}" target="_blank" class="btn btn-small btn-outline">
+                <i class="fas fa-external-link-alt"></i> Open in Moodle
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-large">
+    <i class="fas fa-book-open"></i>
+    <h2>No Courses Found</h2>
+    <p>Run a scan to discover your enrolled courses.</p>
+    <a href="/" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}
