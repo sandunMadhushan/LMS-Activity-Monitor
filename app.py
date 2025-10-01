@@ -160,6 +160,9 @@ def api_new_activities():
 def sync_calendar():
     """Sync calendar events from both LMS."""
     try:
+        # Delete existing calendar events before syncing to prevent duplicates
+        db.delete_calendar_events()
+        
         events = calendar_scraper.get_all_calendar_events()
         
         # Store calendar events in deadlines table

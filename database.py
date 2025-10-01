@@ -464,6 +464,16 @@ class Database:
         conn.commit()
         conn.close()
     
+    def delete_calendar_events(self):
+        """Delete all calendar events from deadlines table."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("DELETE FROM deadlines WHERE source = 'calendar'")
+        
+        conn.commit()
+        conn.close()
+    
     def get_all_upcoming_deadlines(self, days_ahead: int = 30):
         """Get all upcoming deadlines from both activities and calendar events."""
         conn = self.get_connection()
