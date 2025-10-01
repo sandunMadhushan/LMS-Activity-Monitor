@@ -2,12 +2,12 @@
 .env
 
 # Database
-# Allow lms_data.db (needed for Render deployment)
-# !lms_data.db means "don't ignore this file"
-*.db
-!lms_data.db
+# Track lms_data.db (needed for Render deployment)
+# Ignore specific database files instead of *.db pattern
+*.db-journal
 *.sqlite
 *.sqlite3
+lms_data.db.backup
 
 # Python
 __pycache__/
