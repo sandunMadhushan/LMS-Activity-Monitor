@@ -1,7 +1,7 @@
 services:
   # Web Service (Flask Dashboard)
   - type: web
-    name: lms-scraper-dashboard
+    name: LMS-Activity-Monitor
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
@@ -29,7 +29,7 @@ services:
     
   # Cron Job (Scheduled Scraper)
   - type: cron
-    name: lms-scraper-job
+    name: LMS-Activity-Monitor-Job
     env: python
     schedule: "0 1,13 * * *"  # Run at 1 AM and 1 PM UTC daily
     buildCommand: "pip install -r requirements.txt"
