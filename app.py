@@ -56,13 +56,17 @@ def index():
                         deadline['course_name'] = course['course_name']
                         break
     
+    # Check if running on Render (to disable scan button)
+    is_render = os.getenv('RENDER') is not None
+    
     return render_template('index.html', 
                           stats=stats,
                           recent_activities=recent_activities,
                           ousl_activities=ousl_activities,
                           rusl_activities=rusl_activities,
                           upcoming_deadlines=upcoming_deadlines,
-                          scan_history=scan_history)
+                          scan_history=scan_history,
+                          is_render=is_render)
 
 @app.route('/courses')
 def courses():
@@ -94,6 +98,14 @@ def activities():
 @app.route('/api/scan', methods=['POST'])
 def trigger_scan():
     """Trigger a manual scan."""
+    # Disable manual scanning on Render (Chrome not available)
+    # Render sets RENDER=true environment variable
+    if os.getenv('RENDER'):
+        return jsonify({
+            'success': False,
+            'message': 'Manual scanning is disabled on Render. GitHub Actions handles automated scanning twice daily.'
+        }), 403
+    
     try:
         scraper = MoodleScraper(headless=True)
         results = scraper.run_full_scan()

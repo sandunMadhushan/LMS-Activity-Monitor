@@ -5,8 +5,6 @@ services:
     env: python
     buildCommand: |
       pip install -r requirements.txt
-      # Download latest database from GitHub repo
-      curl -L -o lms_data.db https://raw.githubusercontent.com/sandunMadhushan/LMS-Activity-Monitor/master/lms_data.db || echo "Database not found in repo yet"
     startCommand: "gunicorn app:app"
     envVars:
       - key: OUSL_USERNAME

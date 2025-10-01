@@ -1,4 +1,23 @@
-{% extends "base.html" %} {% block title %}Dashboard - LMS Activity Monitor{%
+{% ext      <button
+        onclick="syncCalendar()"
+        class="btn btn-success"
+        title="Auto-syncs daily at 9 AM & 9 PM"
+      >
+        <i class="fas fa-calendar-check"></i> Sync Calendar
+        <span style="font-size: 0.7em; opacity: 0.8">🕒 Auto</span>
+      </button>
+      {% if is_render %}
+      <button class="btn btn-secondary" disabled title="Scanning is automated via GitHub Actions (runs twice daily)">
+        <i class="fas fa-sync"></i> Auto Scan (GitHub Actions)
+      </button>
+      {% else %}
+      <button onclick="triggerScan()" class="btn btn-primary">
+        <i class="fas fa-sync"></i> Run Scan Now
+      </button>
+      {% endif %}
+      <button onclick="testEmail()" class="btn btn-secondary">
+        <i class="fas fa-envelope"></i> Test Email
+      </button>l" %} {% block title %}Dashboard - LMS Activity Monitor{%
 endblock %} {% block content %}
 <div class="dashboard">
   <div class="page-header">
