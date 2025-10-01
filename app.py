@@ -21,9 +21,19 @@ def index():
     recent_activities = db.get_recent_activities(limit=20)
     scan_history = db.get_scan_history(limit=10)
     
+    # Get activities separated by LMS
+    ousl_activities = db.get_activities_by_lms('OUSL', limit=15)
+    rjta_activities = db.get_activities_by_lms('RJTA', limit=15)
+    
+    # Get upcoming deadlines
+    upcoming_deadlines = db.get_upcoming_deadlines(limit=10)
+    
     return render_template('index.html', 
                           stats=stats,
                           recent_activities=recent_activities,
+                          ousl_activities=ousl_activities,
+                          rjta_activities=rjta_activities,
+                          upcoming_deadlines=upcoming_deadlines,
                           scan_history=scan_history)
 
 @app.route('/courses')

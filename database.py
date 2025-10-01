@@ -342,6 +342,13 @@ class Database:
         """)
         last_scan = cursor.fetchone()
         
+        # Count by LMS
+        cursor.execute("SELECT COUNT(*) FROM courses WHERE lms_name = 'OUSL'")
+        ousl_courses = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM courses WHERE lms_name = 'RJTA'")
+        rjta_courses = cursor.fetchone()[0]
+        
         conn.close()
         
         return {
@@ -350,5 +357,67 @@ class Database:
             'new_activities': new_activities,
             'activities_by_type': activities_by_type,
             'last_scan_time': last_scan[0] if last_scan else None,
-            'last_scan_lms': last_scan[1] if last_scan else None
+            'last_scan_lms': last_scan[1] if last_scan else None,
+            'ousl_courses': ousl_courses,
+            'rjta_courses': rjta_courses
         }
+    
+    def get_upcoming_deadlines(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get activities with upcoming deadlines."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                a.activity_id,
+                a.activity_type,
+                a.title,
+                a.description,
+                a.url,
+                a.deadline,
+                a.is_new,
+                c.course_name,
+                c.lms_name
+            FROM activities a
+            JOIN courses c ON a.course_id = c.course_id
+            WHERE a.deadline IS NOT NULL
+            AND a.deadline != ''
+            ORDER BY a.deadline ASC
+            LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        deadlines = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        conn.close()
+        return deadlines
+    
+    def get_activities_by_lms(self, lms_name: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Get recent activities for a specific LMS."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                a.activity_id,
+                a.activity_type,
+                a.title,
+                a.description,
+                a.url,
+                a.deadline,
+                a.first_seen,
+                a.is_new,
+                c.course_name,
+                c.lms_name
+            FROM activities a
+            JOIN courses c ON a.course_id = c.course_id
+            WHERE c.lms_name = ?
+            ORDER BY a.first_seen DESC
+            LIMIT ?
+        """, (lms_name, limit))
+        
+        columns = [desc[0] for desc in cursor.description]
+        activities = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        conn.close()
+        return activities
