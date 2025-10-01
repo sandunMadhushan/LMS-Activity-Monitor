@@ -2,7 +2,10 @@
 .env
 
 # Database
+# Allow lms_data.db (needed for Render deployment)
+# !lms_data.db means "don't ignore this file"
 *.db
+!lms_data.db
 *.sqlite
 *.sqlite3
 
