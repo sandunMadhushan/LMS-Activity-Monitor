@@ -53,3 +53,5 @@ Thumbs.db
 
 # Virtual environments
 .venv/
+
+lms_data.db-journal
