@@ -55,15 +55,29 @@ class MoodleScraper:
         try:
             # Check if chromedriver is in PATH (CI environment)
             import shutil
+            import os
             if shutil.which('chromedriver'):
                 print("Using system ChromeDriver")
                 service = Service('chromedriver')
             else:
                 print("Using ChromeDriverManager")
-                service = Service(ChromeDriverManager().install())
+                driver_path = ChromeDriverManager().install()
+                print(f"ChromeDriver path: {driver_path}")
+                
+                # Handle Chrome for Testing structure (chromedriver-linux64/chromedriver)
+                if 'chromedriver-linux64' in driver_path and not driver_path.endswith('chromedriver'):
+                    # The path might point to THIRD_PARTY_NOTICES, so find the actual chromedriver
+                    driver_dir = os.path.dirname(driver_path)
+                    actual_driver = os.path.join(driver_dir, 'chromedriver')
+                    if os.path.exists(actual_driver):
+                        driver_path = actual_driver
+                        print(f"Corrected path: {driver_path}")
+                
+                service = Service(driver_path)
         except Exception as e:
             print(f"Error detecting ChromeDriver, using ChromeDriverManager: {e}")
-            service = Service(ChromeDriverManager().install())
+            driver_path = ChromeDriverManager().install()
+            service = Service(driver_path)
         
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
         self.driver.implicitly_wait(10)
