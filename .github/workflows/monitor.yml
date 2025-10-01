@@ -2,9 +2,9 @@ name: LMS Activity Monitor
 
 on:
   schedule:
-    # Run at 9 AM and 9 PM UTC (adjust for your timezone)
-    - cron: "0 9 * * *" # 9 AM UTC
-    - cron: "0 21 * * *" # 9 PM UTC
+    # Run at 9 AM and 9 PM Sri Lanka Time (UTC+5:30)
+    - cron: "30 3 * * *" # 9 AM SLT (3:30 AM UTC)
+    - cron: "30 15 * * *" # 9 PM SLT (3:30 PM UTC)
 
   workflow_dispatch: # Allow manual triggering
 
