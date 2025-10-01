@@ -118,7 +118,7 @@ def api_new_activities():
 
 @app.template_filter('datetime')
 def format_datetime(value, format='%Y-%m-%d %H:%M:%S'):
-    """Format datetime for display."""
+    """Format datetime for display in Asia/Colombo timezone."""
     if value is None:
         return ''
     if isinstance(value, str):
@@ -126,7 +126,18 @@ def format_datetime(value, format='%Y-%m-%d %H:%M:%S'):
             value = datetime.fromisoformat(value.replace('Z', '+00:00'))
         except:
             return value
-    return value.strftime(format)
+    
+    # Ensure value is timezone-aware (assume UTC if naive)
+    if value.tzinfo is None:
+        from datetime import timezone
+        value = value.replace(tzinfo=timezone.utc)
+    
+    # Convert to Asia/Colombo timezone (GMT+5:30)
+    from datetime import timezone, timedelta
+    colombo_tz = timezone(timedelta(hours=5, minutes=30))
+    local_time = value.astimezone(colombo_tz)
+    
+    return local_time.strftime(format)
 
 @app.template_filter('timeago')
 def timeago(value):
