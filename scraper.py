@@ -730,31 +730,43 @@ class MoodleScraper:
                 self.db.add_scan_history('RJTA', 0, 0, 0, 'failed', 
                                         rjta_result.get('error'))
             
+        except Exception as e:
+            print(f"❌ Error during scan: {str(e)}")
+            import traceback
+            traceback.print_exc()
         finally:
             self.close_driver()
-        
-        # Send notifications if there are new activities
-        if results['total_new_activities'] > 0:
-            print(f"\n📧 Sending notification for {results['total_new_activities']} new activities...")
-            new_activities = self.db.get_new_activities()
             
-            if self.notifier.send_notification(new_activities):
-                # Mark as notified
-                activity_ids = [a['activity_id'] for a in new_activities]
-                self.db.mark_activities_as_notified(activity_ids)
-        else:
-            print("\n✅ No new activities found.")
-        
-        # Send deadline reminders for upcoming deadlines (next 7 days)
-        print("\n📅 Checking for upcoming deadlines...")
-        upcoming_deadlines = self.db.get_all_upcoming_deadlines(days_ahead=7)
-        
-        if upcoming_deadlines:
-            print(f"⏰ Found {len(upcoming_deadlines)} upcoming deadlines in the next 7 days")
-            print("📧 Sending deadline reminder email...")
-            self.notifier.send_deadline_reminders(upcoming_deadlines)
-        else:
-            print("✅ No upcoming deadlines in the next 7 days")
+            # Send notifications if there are new activities (moved to finally block)
+            try:
+                if results['total_new_activities'] > 0:
+                    print(f"\n📧 Sending notification for {results['total_new_activities']} new activities...")
+                    new_activities = self.db.get_new_activities()
+                    
+                    if self.notifier.send_notification(new_activities):
+                        # Mark as notified
+                        activity_ids = [a['activity_id'] for a in new_activities]
+                        self.db.mark_activities_as_notified(activity_ids)
+                        print("✅ Notifications sent and activities marked as notified")
+                    else:
+                        print("⚠️ Failed to send notifications")
+                else:
+                    print("\n✅ No new activities found.")
+                
+                # Send deadline reminders for upcoming deadlines (next 7 days)
+                print("\n📅 Checking for upcoming deadlines...")
+                upcoming_deadlines = self.db.get_all_upcoming_deadlines(days_ahead=7)
+                
+                if upcoming_deadlines:
+                    print(f"⏰ Found {len(upcoming_deadlines)} upcoming deadlines in the next 7 days")
+                    print("📧 Sending deadline reminder email...")
+                    self.notifier.send_deadline_reminders(upcoming_deadlines)
+                else:
+                    print("✅ No upcoming deadlines in the next 7 days")
+            except Exception as e:
+                print(f"⚠️ Error sending notifications: {str(e)}")
+                import traceback
+                traceback.print_exc()
         
         print("\n" + "=" * 60)
         print("✅ Scan Complete!")
