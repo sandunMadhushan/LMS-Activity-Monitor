@@ -6,8 +6,6 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: OUSL_USERNAME
         sync: false
       - key: OUSL_PASSWORD
@@ -35,8 +33,6 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python scraper.py --headless True"
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: OUSL_USERNAME
         sync: false
       - key: OUSL_PASSWORD
