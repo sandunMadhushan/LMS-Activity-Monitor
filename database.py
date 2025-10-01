@@ -77,6 +77,25 @@ class Database:
             )
         """)
         
+        # Deadlines table (for calendar events and scraped deadlines)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS deadlines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                deadline_id TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                deadline_date TIMESTAMP NOT NULL,
+                lms_name TEXT NOT NULL,
+                course_id TEXT,
+                activity_id TEXT,
+                source TEXT NOT NULL,
+                location TEXT,
+                first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (course_id) REFERENCES courses(course_id),
+                FOREIGN KEY (activity_id) REFERENCES activities(activity_id)
+            )
+        """)
+        
         conn.commit()
         conn.close()
     
@@ -421,3 +440,211 @@ class Database:
         
         conn.close()
         return activities
+
+    
+    def add_deadline(self, deadline_id: str, title: str, deadline_date: str, 
+                    lms_name: str, description: str = None, course_id: str = None,
+                    activity_id: str = None, source: str = 'scraped', location: str = None):
+        """Add or update a deadline."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO deadlines (deadline_id, title, description, deadline_date, 
+                                  lms_name, course_id, activity_id, source, location)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(deadline_id) DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                deadline_date = excluded.deadline_date,
+                location = excluded.location
+        """, (deadline_id, title, description, deadline_date, lms_name, 
+              course_id, activity_id, source, location))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_all_upcoming_deadlines(self, days_ahead: int = 30):
+        """Get all upcoming deadlines from both activities and calendar events."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get deadlines from activities
+        cursor.execute("""
+            SELECT 
+                a.activity_id as id,
+                a.title,
+                a.description,
+                a.deadline as deadline_date,
+                a.url,
+                c.course_name,
+                c.lms_name,
+                'activity' as source,
+                '' as location
+            FROM activities a
+            JOIN courses c ON a.course_id = c.course_id
+            WHERE a.deadline IS NOT NULL
+            AND a.deadline != ''
+            AND datetime(a.deadline) >= datetime('now')
+            AND datetime(a.deadline) <= datetime('now', '+' || ? || ' days')
+        """, (days_ahead,))
+        
+        activity_deadlines = [dict(zip([desc[0] for desc in cursor.description], row)) 
+                             for row in cursor.fetchall()]
+        
+        # Get deadlines from calendar/deadlines table
+        cursor.execute("""
+            SELECT 
+                deadline_id as id,
+                title,
+                description,
+                deadline_date,
+                '' as url,
+                COALESCE((SELECT course_name FROM courses WHERE course_id = d.course_id), '') as course_name,
+                lms_name,
+                source,
+                location
+            FROM deadlines d
+            WHERE datetime(deadline_date) >= datetime('now')
+            AND datetime(deadline_date) <= datetime('now', '+' || ? || ' days')
+        """, (days_ahead,))
+        
+        calendar_deadlines = [dict(zip([desc[0] for desc in cursor.description], row)) 
+                             for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        # Combine and sort by date
+        all_deadlines = activity_deadlines + calendar_deadlines
+        all_deadlines.sort(key=lambda x: x.get('deadline_date', ''))
+        
+        return all_deadlines
+    
+    def get_scan_history(self, limit: int = 10):
+        """Get recent scan history."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                lms_name,
+                scan_time,
+                courses_found,
+                activities_found,
+                new_activities,
+                status,
+                error_message
+            FROM scan_history
+            ORDER BY scan_time DESC
+            LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        history = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        conn.close()
+        return history
+
+    
+    def add_deadline(self, deadline_id: str, title: str, deadline_date: str, 
+                    lms_name: str, description: str = None, course_id: str = None,
+                    activity_id: str = None, source: str = 'scraped', location: str = None):
+        """Add or update a deadline."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO deadlines (deadline_id, title, description, deadline_date, 
+                                  lms_name, course_id, activity_id, source, location)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(deadline_id) DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                deadline_date = excluded.deadline_date,
+                location = excluded.location
+        """, (deadline_id, title, description, deadline_date, lms_name, 
+              course_id, activity_id, source, location))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_all_upcoming_deadlines(self, days_ahead: int = 30):
+        """Get all upcoming deadlines from both activities and calendar events."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get deadlines from activities
+        cursor.execute("""
+            SELECT 
+                a.activity_id as id,
+                a.title,
+                a.description,
+                a.deadline as deadline_date,
+                a.url,
+                c.course_name,
+                c.lms_name,
+                'activity' as source,
+                '' as location
+            FROM activities a
+            JOIN courses c ON a.course_id = c.course_id
+            WHERE a.deadline IS NOT NULL
+            AND a.deadline != ''
+            AND datetime(a.deadline) >= datetime('now')
+            AND datetime(a.deadline) <= datetime('now', '+' || ? || ' days')
+        """, (days_ahead,))
+        
+        activity_deadlines = [dict(zip([desc[0] for desc in cursor.description], row)) 
+                             for row in cursor.fetchall()]
+        
+        # Get deadlines from calendar/deadlines table
+        cursor.execute("""
+            SELECT 
+                deadline_id as id,
+                title,
+                description,
+                deadline_date,
+                '' as url,
+                COALESCE((SELECT course_name FROM courses WHERE course_id = d.course_id), '') as course_name,
+                lms_name,
+                source,
+                location
+            FROM deadlines d
+            WHERE datetime(deadline_date) >= datetime('now')
+            AND datetime(deadline_date) <= datetime('now', '+' || ? || ' days')
+        """, (days_ahead,))
+        
+        calendar_deadlines = [dict(zip([desc[0] for desc in cursor.description], row)) 
+                             for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        # Combine and sort by date
+        all_deadlines = activity_deadlines + calendar_deadlines
+        all_deadlines.sort(key=lambda x: x.get('deadline_date', ''))
+        
+        return all_deadlines
+    
+    def get_scan_history(self, limit: int = 10):
+        """Get recent scan history."""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                lms_name,
+                scan_time,
+                courses_found,
+                activities_found,
+                new_activities,
+                status,
+                error_message
+            FROM scan_history
+            ORDER BY scan_time DESC
+            LIMIT ?
+        """, (limit,))
+        
+        columns = [desc[0] for desc in cursor.description]
+        history = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        conn.close()
+        return history

@@ -745,6 +745,17 @@ class MoodleScraper:
         else:
             print("\n✅ No new activities found.")
         
+        # Send deadline reminders for upcoming deadlines (next 7 days)
+        print("\n📅 Checking for upcoming deadlines...")
+        upcoming_deadlines = self.db.get_all_upcoming_deadlines(days_ahead=7)
+        
+        if upcoming_deadlines:
+            print(f"⏰ Found {len(upcoming_deadlines)} upcoming deadlines in the next 7 days")
+            print("📧 Sending deadline reminder email...")
+            self.notifier.send_deadline_reminders(upcoming_deadlines)
+        else:
+            print("✅ No upcoming deadlines in the next 7 days")
+        
         print("\n" + "=" * 60)
         print("✅ Scan Complete!")
         print("=" * 60)

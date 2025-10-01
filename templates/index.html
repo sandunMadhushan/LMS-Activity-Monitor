@@ -4,6 +4,10 @@ endblock %} {% block content %}
   <div class="page-header">
     <h1>📊 Dashboard</h1>
     <div class="actions">
+      <button onclick="syncCalendar()" class="btn btn-primary" title="Auto-syncs daily at 9 AM & 9 PM">
+        <i class="fas fa-calendar-check"></i> Sync Calendar
+        <span style="font-size: 0.7em; opacity: 0.8;">🕒 Auto</span>
+      </button>
       <button onclick="triggerScan()" class="btn btn-primary">
         <i class="fas fa-sync"></i> Run Scan Now
       </button>
@@ -70,39 +74,131 @@ endblock %} {% block content %}
   </div>
   {% endif %}
 
-  <!-- Upcoming Deadlines Section -->
+  <!-- Upcoming Deadlines Section - Tabbed by University -->
   {% if upcoming_deadlines %}
   <div class="card deadline-card">
     <div class="card-header">
       <h2><i class="fas fa-exclamation-triangle"></i> Upcoming Deadlines</h2>
     </div>
     <div class="card-body">
-      <div class="deadline-list">
-        {% for activity in upcoming_deadlines %}
-        <div class="deadline-item {% if activity.is_new %}new{% endif %}">
-          <div class="deadline-date">
-            <div class="date-icon">
-              <i class="fas fa-calendar-alt"></i>
+      <!-- Tabs for OUSL and RJTA -->
+      <div class="tabs">
+        <button class="tab-button active" onclick="switchDeadlineTab(event, 'ousl-deadlines')">
+          <i class="fas fa-university"></i> OUSL
+          <span class="tab-count">
+            {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'OUSL')|list|length }}
+          </span>
+        </button>
+        <button class="tab-button" onclick="switchDeadlineTab(event, 'rjta-deadlines')">
+          <i class="fas fa-university"></i> RJTA
+          <span class="tab-count">
+            {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'RJTA')|list|length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- OUSL Deadlines -->
+      <div id="ousl-deadlines" class="tab-content active">
+        <div class="deadline-list">
+          {% for activity in upcoming_deadlines %}
+          {% if activity.lms_name == 'OUSL' %}
+          <div class="deadline-item {% if activity.is_new %}new{% endif %}">
+            <div class="deadline-date">
+              <div class="date-icon">
+                <i class="fas fa-calendar-alt"></i>
+              </div>
+              <div class="date-text">
+                <strong>{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong>
+                <small>{{ activity.deadline_date|datetime('%I:%M %p') }}</small>
+              </div>
             </div>
-            <div class="date-text">
-              <strong>{{ activity.deadline }}</strong>
+            <div class="deadline-content">
+              {% if activity.source %}
+              <span class="activity-type" style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}">
+                {{ activity.source|capitalize }}
+              </span>
+              {% elif activity.activity_type %}
+              <span class="activity-type">{{ activity.activity_type }}</span>
+              {% endif %}
+              <h4>{{ activity.title }}</h4>
+              {% if activity.course_name %}
+              <p class="activity-course">
+                <i class="fas fa-book"></i> {{ activity.course_name }}
+              </p>
+              {% endif %}
+              {% if activity.location %}
+              <p class="activity-location">
+                <i class="fas fa-map-marker-alt"></i> {{ activity.location }}
+              </p>
+              {% endif %}
             </div>
+            {% if activity.url %}
+            <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
+              <i class="fas fa-external-link-alt"></i> View
+            </a>
+            {% endif %}
           </div>
-          <div class="deadline-content">
-            <span class="activity-type">{{ activity.activity_type }}</span>
-            <h4>{{ activity.title }}</h4>
-            <p class="activity-course">
-              <i class="fas fa-book"></i> {{ activity.course_name }}
-              <span class="lms-badge">{{ activity.lms_name }}</span>
-            </p>
-          </div>
-          {% if activity.url %}
-          <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
-            <i class="fas fa-external-link-alt"></i> View
-          </a>
           {% endif %}
+          {% endfor %}
         </div>
-        {% endfor %}
+        {% if upcoming_deadlines|selectattr('lms_name', 'equalto', 'OUSL')|list|length == 0 %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>No upcoming deadlines for OUSL</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- RJTA Deadlines -->
+      <div id="rjta-deadlines" class="tab-content">
+        <div class="deadline-list">
+          {% for activity in upcoming_deadlines %}
+          {% if activity.lms_name == 'RJTA' %}
+          <div class="deadline-item {% if activity.is_new %}new{% endif %}">
+            <div class="deadline-date">
+              <div class="date-icon">
+                <i class="fas fa-calendar-alt"></i>
+              </div>
+              <div class="date-text">
+                <strong>{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong>
+                <small>{{ activity.deadline_date|datetime('%I:%M %p') }}</small>
+              </div>
+            </div>
+            <div class="deadline-content">
+              {% if activity.source %}
+              <span class="activity-type" style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}">
+                {{ activity.source|capitalize }}
+              </span>
+              {% elif activity.activity_type %}
+              <span class="activity-type">{{ activity.activity_type }}</span>
+              {% endif %}
+              <h4>{{ activity.title }}</h4>
+              {% if activity.course_name %}
+              <p class="activity-course">
+                <i class="fas fa-book"></i> {{ activity.course_name }}
+              </p>
+              {% endif %}
+              {% if activity.location %}
+              <p class="activity-location">
+                <i class="fas fa-map-marker-alt"></i> {{ activity.location }}
+              </p>
+              {% endif %}
+            </div>
+            {% if activity.url %}
+            <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
+              <i class="fas fa-external-link-alt"></i> View
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% if upcoming_deadlines|selectattr('lms_name', 'equalto', 'RJTA')|list|length == 0 %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>No upcoming deadlines for RJTA</p>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -368,6 +464,22 @@ endblock %} {% block content %}
     evt.currentTarget.classList.add("active");
   }
 
+  function switchDeadlineTab(evt, tabName) {
+    // Same as openTab but specifically for deadline tabs
+    var tabContents = document.querySelectorAll(".deadline-card .tab-content");
+    for (var i = 0; i < tabContents.length; i++) {
+      tabContents[i].classList.remove("active");
+    }
+
+    var tabButtons = document.querySelectorAll(".deadline-card .tab-button");
+    for (var i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].classList.remove("active");
+    }
+
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+  }
+
   function showNotification(message, type = "info") {
     const notification = document.getElementById("notification");
     notification.textContent = message;
@@ -399,6 +511,29 @@ endblock %} {% block content %}
       })
       .catch((error) => {
         showNotification("Scan failed: " + error.message, "error");
+      });
+  }
+
+  function syncCalendar() {
+    showNotification("Syncing calendar events...", "info");
+
+    fetch("/api/sync-calendar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showNotification(data.message, "success");
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showNotification(data.message, "error");
+        }
+      })
+      .catch((error) => {
+        showNotification("Sync failed: " + error.message, "error");
       });
   }
 

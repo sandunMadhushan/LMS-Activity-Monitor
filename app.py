@@ -2,10 +2,13 @@ from flask import Flask, render_template, jsonify, request
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import atexit
 
 from database import Database
 from scraper import MoodleScraper
 from notifier import Notifier
+from calendar_scraper import CalendarScraper
+from scheduler import TaskScheduler
 
 load_dotenv()
 
@@ -13,6 +16,14 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'change-this-secret-key')
 
 db = Database()
+calendar_scraper = CalendarScraper()
+
+# Initialize and start the scheduler
+scheduler = TaskScheduler()
+scheduler.start()
+
+# Ensure scheduler stops when app shuts down
+atexit.register(lambda: scheduler.stop())
 
 @app.route('/')
 def index():
@@ -25,8 +36,8 @@ def index():
     ousl_activities = db.get_activities_by_lms('OUSL', limit=15)
     rjta_activities = db.get_activities_by_lms('RJTA', limit=15)
     
-    # Get upcoming deadlines
-    upcoming_deadlines = db.get_upcoming_deadlines(limit=10)
+    # Get upcoming deadlines (combined from activities, calendar, and scraped)
+    upcoming_deadlines = db.get_all_upcoming_deadlines(days_ahead=30)
     
     return render_template('index.html', 
                           stats=stats,
@@ -115,6 +126,52 @@ def api_new_activities():
     """Get new activities as JSON."""
     activities = db.get_new_activities()
     return jsonify(activities)
+
+@app.route('/api/sync-calendar', methods=['POST'])
+def sync_calendar():
+    """Sync calendar events from both LMS."""
+    try:
+        events = calendar_scraper.get_all_calendar_events()
+        
+        # Store calendar events in deadlines table
+        count = 0
+        for event in events:
+            deadline_id = f"cal_{event['lms']}_{event['date'].isoformat()}_{hash(event['title'])}"
+            db.add_deadline(
+                deadline_id=deadline_id,
+                title=event['title'],
+                description=event.get('description', ''),
+                deadline_date=event['date'].isoformat(),
+                lms_name=event['lms'],
+                source='calendar',
+                location=event.get('location', '')
+            )
+            count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Synced {count} calendar events successfully!'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error syncing calendar: {str(e)}'
+        }), 500
+
+@app.route('/api/scheduled-jobs')
+def scheduled_jobs():
+    """Get list of scheduled jobs."""
+    try:
+        jobs = scheduler.get_jobs()
+        return jsonify({
+            'success': True,
+            'jobs': jobs
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error retrieving jobs: {str(e)}'
+        }), 500
 
 @app.template_filter('datetime')
 def format_datetime(value, format='%Y-%m-%d %H:%M:%S'):
