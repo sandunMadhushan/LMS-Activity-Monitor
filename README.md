@@ -18,11 +18,13 @@ A web-based system to monitor multiple Moodle LMS instances for new activities, 
 1. Clone this repository
 2. Install Python 3.9 or higher
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Copy `.env.example` to `.env` and fill in your credentials:
+
    ```bash
    cp .env.example .env
    ```
@@ -46,11 +48,13 @@ To send email notifications:
 ### 3. Running Locally
 
 Run the scraper manually:
+
 ```bash
 python scraper.py
 ```
 
 Run the web dashboard:
+
 ```bash
 python app.py
 ```
@@ -62,6 +66,7 @@ Then visit: `http://localhost:5000`
 1. Fork this repository
 2. Go to Settings → Secrets and variables → Actions
 3. Add the following secrets:
+
    - `OUSL_USERNAME`
    - `OUSL_PASSWORD`
    - `RJTA_USERNAME`
@@ -157,3 +162,4 @@ If you encounter issues:
 ## License
 
 MIT License - Feel free to modify and use for your needs!
+```

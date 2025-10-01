@@ -22,6 +22,7 @@ pip install -r requirements.txt
 ### 1.2 Configure Environment Variables
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
@@ -29,14 +30,17 @@ pip install -r requirements.txt
 2. Edit `.env` with your credentials:
 
    **For OUSL (Open University):**
+
    - `OUSL_USERNAME`: Your OUSL username
    - `OUSL_PASSWORD`: Your OUSL password
 
    **For RJTA (Rajarata University):**
+
    - `RJTA_USERNAME`: Your Rajarata username
    - `RJTA_PASSWORD`: Your Rajarata password
 
    **For Email Notifications:**
+
    - `EMAIL_SENDER`: Your Gmail address
    - `EMAIL_PASSWORD`: Gmail App Password (see Step 2)
    - `EMAIL_RECIPIENT`: Email where you want to receive notifications
@@ -44,6 +48,7 @@ pip install -r requirements.txt
 ### 1.3 Test the System
 
 Run a test scan:
+
 ```bash
 python scraper.py --headless False
 ```
@@ -77,6 +82,7 @@ You should receive a test email within a few seconds.
 ### 4.1 Push to GitHub
 
 1. Initialize git repository (if not already done):
+
    ```bash
    git init
    git add .
@@ -99,14 +105,14 @@ You should receive a test email within a few seconds.
 3. Click **New repository secret**
 4. Add the following secrets (one by one):
 
-   | Secret Name | Value |
-   |-------------|-------|
-   | `OUSL_USERNAME` | Your OUSL username |
-   | `OUSL_PASSWORD` | Your OUSL password |
-   | `RJTA_USERNAME` | Your Rajarata username |
-   | `RJTA_PASSWORD` | Your Rajarata password |
-   | `EMAIL_SENDER` | Your Gmail address |
-   | `EMAIL_PASSWORD` | Your Gmail App Password |
+   | Secret Name       | Value                          |
+   | ----------------- | ------------------------------ |
+   | `OUSL_USERNAME`   | Your OUSL username             |
+   | `OUSL_PASSWORD`   | Your OUSL password             |
+   | `RJTA_USERNAME`   | Your Rajarata username         |
+   | `RJTA_PASSWORD`   | Your Rajarata password         |
+   | `EMAIL_SENDER`    | Your Gmail address             |
+   | `EMAIL_PASSWORD`  | Your Gmail App Password        |
    | `EMAIL_RECIPIENT` | Email to receive notifications |
 
 ### 4.3 Enable GitHub Actions
@@ -122,8 +128,8 @@ To change scan times, edit `.github/workflows/monitor.yml`:
 
 ```yaml
 schedule:
-  - cron: '0 3 * * *'   # 3 AM UTC = 9 AM Sri Lanka Time (UTC+6)
-  - cron: '0 15 * * *'  # 3 PM UTC = 9 PM Sri Lanka Time (UTC+6)
+  - cron: "0 3 * * *" # 3 AM UTC = 9 AM Sri Lanka Time (UTC+6)
+  - cron: "0 15 * * *" # 3 PM UTC = 9 PM Sri Lanka Time (UTC+6)
 ```
 
 Use https://crontab.guru/ to help with cron syntax.
@@ -139,6 +145,7 @@ python app.py
 Then open: http://localhost:5000
 
 ### Features:
+
 - View all courses from both universities
 - See new activities and assignments
 - Check scan history
@@ -167,6 +174,7 @@ Example for Railway:
 ### Issue: Selenium/Chrome errors
 
 **Solution:** Install Google Chrome:
+
 - Windows: Download from google.com/chrome
 - Linux: Already included in GitHub Actions
 - Mac: Download from google.com/chrome
@@ -174,6 +182,7 @@ Example for Railway:
 ### Issue: Login fails
 
 **Solution:**
+
 - Double-check your credentials
 - Make sure you can login manually to both Moodle sites
 - Check if there are any captchas or additional security measures
@@ -181,6 +190,7 @@ Example for Railway:
 ### Issue: Email not sending
 
 **Solution:**
+
 - Verify Gmail App Password is correct (16 characters, no spaces)
 - Ensure 2-Factor Authentication is enabled on your Google account
 - Check if "Less secure app access" is not blocking it
@@ -188,6 +198,7 @@ Example for Railway:
 ### Issue: GitHub Actions failing
 
 **Solution:**
+
 - Check the Actions tab for error logs
 - Verify all secrets are set correctly
 - Make sure the workflow file has correct indentation
@@ -195,6 +206,7 @@ Example for Railway:
 ## What Gets Monitored?
 
 The system monitors:
+
 - ✅ New assignments (with deadlines)
 - ✅ New resources (PDFs, files, links)
 - ✅ New forum discussions
@@ -205,6 +217,7 @@ The system monitors:
 ## Notification Format
 
 You'll receive an email with:
+
 - Subject: "🔔 LMS Update: X New Activities"
 - List of all new activities grouped by university
 - Course name for each activity
@@ -230,6 +243,7 @@ You'll receive an email with:
 ### Change Check Times
 
 Edit `check_times` in `.env`:
+
 ```
 CHECK_TIMES=09:00,21:00
 ```

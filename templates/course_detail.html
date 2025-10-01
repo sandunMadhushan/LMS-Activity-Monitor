@@ -1,73 +1,72 @@
-{% extends "base.html" %}
-
-{% block title %}{{ course.course_name if course else 'Course' }} - LMS Activity Monitor{% endblock %}
-
-{% block content %}
-{% if course %}
+{% extends "base.html" %} {% block title %}{{ course.course_name if course else
+'Course' }} - LMS Activity Monitor{% endblock %} {% block content %} {% if
+course %}
 <div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="/courses">Courses</a> / {{ course.course_name }}
-        </div>
-        <h1>{{ course.course_name }}</h1>
-        <div class="course-meta">
-            <span class="lms-badge">{{ course.lms_name }}</span>
-            <span><i class="fas fa-clock"></i> Last checked: {{ course.last_checked|timeago }}</span>
-        </div>
+  <div>
+    <div class="breadcrumb">
+      <a href="/courses">Courses</a> / {{ course.course_name }}
     </div>
-    {% if course.course_url %}
-    <a href="{{ course.course_url }}" target="_blank" class="btn btn-primary">
-        <i class="fas fa-external-link-alt"></i> Open in Moodle
-    </a>
-    {% endif %}
+    <h1>{{ course.course_name }}</h1>
+    <div class="course-meta">
+      <span class="lms-badge">{{ course.lms_name }}</span>
+      <span
+        ><i class="fas fa-clock"></i> Last checked: {{
+        course.last_checked|timeago }}</span
+      >
+    </div>
+  </div>
+  {% if course.course_url %}
+  <a href="{{ course.course_url }}" target="_blank" class="btn btn-primary">
+    <i class="fas fa-external-link-alt"></i> Open in Moodle
+  </a>
+  {% endif %}
 </div>
 
 {% if activities %}
 <div class="activities-container">
-    {% for activity in activities %}
-    <div class="activity-card {% if activity.is_new %}new{% endif %}">
-        <div class="activity-card-header">
-            <div>
-                <span class="activity-type">{{ activity.activity_type }}</span>
-                {% if activity.is_new %}
-                <span class="badge badge-new">NEW</span>
-                {% endif %}
-            </div>
-            {% if activity.url %}
-            <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
-                <i class="fas fa-external-link-alt"></i> Open
-            </a>
-            {% endif %}
-        </div>
-        <div class="activity-card-body">
-            <h3>{{ activity.title }}</h3>
-            {% if activity.deadline %}
-            <p class="activity-deadline">
-                <i class="fas fa-clock"></i> <strong>Deadline:</strong> {{ activity.deadline }}
-            </p>
-            {% endif %}
-            {% if activity.description %}
-            <p class="activity-description">{{ activity.description }}</p>
-            {% endif %}
-            <p class="activity-time"><i class="fas fa-calendar"></i> Added {{ activity.first_seen|timeago }}</p>
-        </div>
+  {% for activity in activities %}
+  <div class="activity-card {% if activity.is_new %}new{% endif %}">
+    <div class="activity-card-header">
+      <div>
+        <span class="activity-type">{{ activity.activity_type }}</span>
+        {% if activity.is_new %}
+        <span class="badge badge-new">NEW</span>
+        {% endif %}
+      </div>
+      {% if activity.url %}
+      <a href="{{ activity.url }}" target="_blank" class="btn btn-small">
+        <i class="fas fa-external-link-alt"></i> Open
+      </a>
+      {% endif %}
     </div>
-    {% endfor %}
+    <div class="activity-card-body">
+      <h3>{{ activity.title }}</h3>
+      {% if activity.deadline %}
+      <p class="activity-deadline">
+        <i class="fas fa-clock"></i> <strong>Deadline:</strong> {{
+        activity.deadline }}
+      </p>
+      {% endif %} {% if activity.description %}
+      <p class="activity-description">{{ activity.description }}</p>
+      {% endif %}
+      <p class="activity-time">
+        <i class="fas fa-calendar"></i> Added {{ activity.first_seen|timeago }}
+      </p>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 {% else %}
 <div class="empty-state-large">
-    <i class="fas fa-tasks"></i>
-    <h2>No Activities Yet</h2>
-    <p>This course doesn't have any activities tracked yet.</p>
+  <i class="fas fa-tasks"></i>
+  <h2>No Activities Yet</h2>
+  <p>This course doesn't have any activities tracked yet.</p>
 </div>
-{% endif %}
-
-{% else %}
+{% endif %} {% else %}
 <div class="empty-state-large">
-    <i class="fas fa-exclamation-triangle"></i>
-    <h2>Course Not Found</h2>
-    <p>The requested course could not be found.</p>
-    <a href="/courses" class="btn btn-primary">View All Courses</a>
+  <i class="fas fa-exclamation-triangle"></i>
+  <h2>Course Not Found</h2>
+  <p>The requested course could not be found.</p>
+  <a href="/courses" class="btn btn-primary">View All Courses</a>
 </div>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}

@@ -3,6 +3,7 @@
 ## 🚀 Quick Commands
 
 ### First Time Setup
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -32,11 +33,13 @@ python app.py
 ### Quick Start Scripts
 
 **Windows:**
+
 ```bash
 start.bat
 ```
 
 **Linux/Mac:**
+
 ```bash
 chmod +x start.sh
 ./start.sh
@@ -77,6 +80,7 @@ SMTP_PORT=587
 ## 🤖 GitHub Actions Setup
 
 ### 1. Push to GitHub
+
 ```bash
 git init
 git add .
@@ -86,9 +90,11 @@ git push -u origin main
 ```
 
 ### 2. Add Secrets
+
 Go to: **Settings** → **Secrets and variables** → **Actions**
 
 Add these secrets:
+
 - `OUSL_USERNAME`
 - `OUSL_PASSWORD`
 - `RJTA_USERNAME`
@@ -98,6 +104,7 @@ Add these secrets:
 - `EMAIL_RECIPIENT`
 
 ### 3. Run Workflow
+
 Go to **Actions** tab → **LMS Monitor** → **Run workflow**
 
 ## 🕐 Schedule Times
@@ -108,32 +115,34 @@ To adjust for your timezone, edit `.github/workflows/monitor.yml`:
 
 ```yaml
 schedule:
-  - cron: '0 3 * * *'   # 9 AM Sri Lanka Time (UTC+6)
-  - cron: '0 15 * * *'  # 9 PM Sri Lanka Time (UTC+6)
+  - cron: "0 3 * * *" # 9 AM Sri Lanka Time (UTC+6)
+  - cron: "0 15 * * *" # 9 PM Sri Lanka Time (UTC+6)
 ```
 
 Use https://crontab.guru/ for help
 
 ## 📊 Web Dashboard Routes
 
-| URL | Description |
-|-----|-------------|
-| `/` | Main dashboard with stats |
-| `/courses` | All enrolled courses |
-| `/courses?lms=OUSL` | Filter by OUSL |
-| `/courses?lms=RJTA` | Filter by RJTA |
-| `/course/<id>` | View single course |
-| `/activities` | All activities timeline |
+| URL                 | Description               |
+| ------------------- | ------------------------- |
+| `/`                 | Main dashboard with stats |
+| `/courses`          | All enrolled courses      |
+| `/courses?lms=OUSL` | Filter by OUSL            |
+| `/courses?lms=RJTA` | Filter by RJTA            |
+| `/course/<id>`      | View single course        |
+| `/activities`       | All activities timeline   |
 
 ## 🗄️ Database Schema
 
 ### Tables
+
 - **courses**: All enrolled courses
 - **activities**: All course activities
 - **scan_history**: Scan logs
 - **notifications**: Notification logs
 
 ### Important Queries
+
 ```sql
 -- Get new activities
 SELECT * FROM activities WHERE is_new = 1;
@@ -147,20 +156,21 @@ SELECT * FROM scan_history ORDER BY scan_time DESC LIMIT 10;
 
 ## 🎨 Activity Types Monitored
 
-| Type | Icon | Description |
-|------|------|-------------|
-| `assign` | 📄 | Assignments |
-| `quiz` | ❓ | Quizzes/Tests |
-| `resource` | 📁 | Files/PDFs |
-| `forum` | 💬 | Discussions |
-| `url` | 🔗 | External links |
-| `page` | 📃 | Course pages |
-| `label` | 🏷️ | Section labels |
-| `book` | 📖 | Course books |
+| Type       | Icon | Description    |
+| ---------- | ---- | -------------- |
+| `assign`   | 📄   | Assignments    |
+| `quiz`     | ❓   | Quizzes/Tests  |
+| `resource` | 📁   | Files/PDFs     |
+| `forum`    | 💬   | Discussions    |
+| `url`      | 🔗   | External links |
+| `page`     | 📃   | Course pages   |
+| `label`    | 🏷️   | Section labels |
+| `book`     | 📖   | Course books   |
 
 ## 🔧 Troubleshooting Quick Fixes
 
 ### Login Failed
+
 ```bash
 # Test with visible browser
 python scraper.py --headless False
@@ -168,12 +178,14 @@ python scraper.py --headless False
 ```
 
 ### Email Not Sending
+
 ```bash
 # Test email configuration
 python scraper.py --test-email
 ```
 
 ### Reset Database
+
 ```bash
 # Delete and restart
 rm lms_data.db
@@ -181,11 +193,13 @@ python scraper.py
 ```
 
 ### Update Dependencies
+
 ```bash
 pip install --upgrade -r requirements.txt
 ```
 
 ### Clear Chrome Cache
+
 ```python
 # In scraper.py, add to chrome_options:
 chrome_options.add_argument('--disable-cache')
@@ -194,11 +208,13 @@ chrome_options.add_argument('--disable-cache')
 ## 📱 Access from Mobile
 
 ### Local Network
+
 1. Find your IP: `ipconfig` (Windows) or `ifconfig` (Linux/Mac)
 2. Run: `python app.py`
 3. Access from phone: `http://YOUR_IP:5000`
 
 ### Public Access (ngrok)
+
 ```bash
 # Install ngrok
 npm install -g ngrok
@@ -215,40 +231,49 @@ ngrok http 5000
 ## 🎯 Common Customizations
 
 ### Change Email Subject
+
 Edit `notifier.py`, line with:
+
 ```python
 msg['Subject'] = f'🔔 Your Custom Subject: {len(activities)} New'
 ```
 
 ### Add More LMS Instances
+
 1. Copy `scrape_ousl()` method in `scraper.py`
 2. Modify for new LMS
 3. Add credentials to `.env`
 4. Call in `run_full_scan()`
 
 ### Filter Specific Courses
+
 In `scraper.py`, add after finding courses:
+
 ```python
 if 'UNWANTED COURSE' in course_name:
     continue
 ```
 
 ### Change Notification Format
+
 Edit `_create_html_email()` in `notifier.py`
 
 ## 📈 Performance Tips
 
 ### Faster Scans
+
 - Reduce `time.sleep()` values
 - Disable images: `chrome_options.add_argument('--blink-settings=imagesEnabled=false')`
 - Use headless mode
 
 ### Lower Memory Usage
+
 - Close driver between scans
 - Limit database query results
 - Clear old notifications
 
 ### Reduce Email Size
+
 - Truncate descriptions
 - Limit activity count per email
 - Remove images from HTML
@@ -282,8 +307,9 @@ Edit `_create_html_email()` in `notifier.py`
 ---
 
 **Quick Links:**
+
 - [Setup Guide](SETUP_GUIDE.md)
 - [Full Overview](PROJECT_OVERVIEW.md)
 - [GitHub Issues](../../issues)
 
-*Keep learning! 🚀*
+_Keep learning! 🚀_

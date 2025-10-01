@@ -35,7 +35,7 @@ lms-scraper/
 │
 ├── 📚 Documentation
 │   ├── README.md           (5KB)  - Project overview
-│   ├── GETTING_STARTED.md  (10KB) - Quick start guide  
+│   ├── GETTING_STARTED.md  (10KB) - Quick start guide
 │   ├── SETUP_GUIDE.md      (7KB)  - Detailed setup instructions
 │   ├── PROJECT_OVERVIEW.md (13KB) - Complete architecture
 │   └── QUICK_REFERENCE.md  (6KB)  - Command cheat sheet
@@ -53,13 +53,14 @@ lms-scraper/
 
 **Total Lines of Code:** ~2,500+  
 **Total Files Created:** 25+  
-**Development Time Equivalent:** 20-30 hours  
+**Development Time Equivalent:** 20-30 hours
 
 ---
 
 ## 🎯 Key Features Implemented
 
 ### 1. **Intelligent Web Scraping**
+
 - ✅ Automated login to both OUSL and Rajarata Moodle
 - ✅ Session management with cookies
 - ✅ Handles SSO/OAuth authentication
@@ -71,6 +72,7 @@ lms-scraper/
 - ✅ Error handling and retry logic
 
 ### 2. **Smart Database System**
+
 - ✅ SQLite database with 4 tables
 - ✅ Courses tracking with metadata
 - ✅ Activities with timestamps
@@ -81,6 +83,7 @@ lms-scraper/
 - ✅ Efficient indexing and queries
 
 ### 3. **Professional Email Notifications**
+
 - ✅ Beautiful HTML email templates
 - ✅ Plain text fallback
 - ✅ Grouped by university
@@ -92,6 +95,7 @@ lms-scraper/
 - ✅ Test email functionality
 
 ### 4. **Modern Web Dashboard**
+
 - ✅ Responsive design (mobile-friendly)
 - ✅ Real-time statistics
 - ✅ Course browser with filtering
@@ -104,6 +108,7 @@ lms-scraper/
 - ✅ Font Awesome icons
 
 ### 5. **GitHub Actions Automation**
+
 - ✅ Scheduled runs (twice daily)
 - ✅ Manual trigger option
 - ✅ Secure credential storage
@@ -115,6 +120,7 @@ lms-scraper/
 - ✅ Dependency caching
 
 ### 6. **Developer Experience**
+
 - ✅ Quick start scripts (Windows/Linux/Mac)
 - ✅ Comprehensive documentation
 - ✅ Setup verification tool
@@ -155,18 +161,18 @@ python app.py
 
 ## 📊 What Gets Monitored
 
-| Activity Type | Icon | Description |
-|--------------|------|-------------|
-| Assignment | 📄 | Homework, coursework, submissions |
-| Quiz | ❓ | Tests, quizzes, exams |
-| Resource | 📁 | PDFs, files, documents |
-| Forum | 💬 | Discussion boards |
-| URL | 🔗 | External links |
-| Page | 📃 | Course content pages |
-| Label | 🏷️ | Section headers |
-| Book | 📖 | Course textbooks |
-| Workshop | 🛠️ | Peer assessments |
-| Lesson | 📚 | Structured content |
+| Activity Type | Icon | Description                       |
+| ------------- | ---- | --------------------------------- |
+| Assignment    | 📄   | Homework, coursework, submissions |
+| Quiz          | ❓   | Tests, quizzes, exams             |
+| Resource      | 📁   | PDFs, files, documents            |
+| Forum         | 💬   | Discussion boards                 |
+| URL           | 🔗   | External links                    |
+| Page          | 📃   | Course content pages              |
+| Label         | 🏷️   | Section headers                   |
+| Book          | 📖   | Course textbooks                  |
+| Workshop      | 🛠️   | Peer assessments                  |
+| Lesson        | 📚   | Structured content                |
 
 **Plus:** Deadlines, descriptions, direct links!
 
@@ -175,6 +181,7 @@ python app.py
 ## 🎨 Technology Stack
 
 ### Backend
+
 - **Python 3.11** - Core language
 - **Selenium 4.15** - Browser automation
 - **Beautiful Soup 4.12** - HTML parsing
@@ -182,12 +189,14 @@ python app.py
 - **Flask 3.0** - Web framework
 
 ### Frontend
+
 - **HTML5/CSS3** - Structure and styling
 - **Jinja2** - Templating
 - **Font Awesome 6** - Icons
 - **Responsive Grid** - Mobile support
 
 ### DevOps
+
 - **GitHub Actions** - CI/CD
 - **Git** - Version control
 - **SMTP** - Email delivery
@@ -197,6 +206,7 @@ python app.py
 ## 💡 Smart Features
 
 ### Change Detection Algorithm
+
 ```python
 1. Scan both Moodle sites
 2. Extract all activities
@@ -208,6 +218,7 @@ python app.py
 ```
 
 ### Email Notification Logic
+
 ```python
 if new_activities_found:
     - Group by LMS
@@ -221,9 +232,10 @@ else:
 ```
 
 ### Database Schema
+
 ```sql
 courses (id, course_id, lms_name, course_name, url, timestamps)
-activities (id, activity_id, course_id, type, title, description, 
+activities (id, activity_id, course_id, type, title, description,
             url, deadline, is_new, timestamps)
 scan_history (id, lms_name, scan_time, stats, status)
 notifications (id, activity_id, sent_at, type, status)
@@ -239,7 +251,7 @@ notifications (id, activity_id, sent_at, type, status)
 ✅ **Private Repository**: Your data stays private  
 ✅ **App Passwords**: Gmail app-specific passwords  
 ✅ **Session Cleanup**: Closes browsers after use  
-✅ **SQL Injection Safe**: Parameterized queries  
+✅ **SQL Injection Safe**: Parameterized queries
 
 ---
 
@@ -257,6 +269,7 @@ notifications (id, activity_id, sent_at, type, status)
 ## 🎓 Real-World Use Case
 
 **Your Scenario:**
+
 ```
 Problem:
 ├─ Enrolled in OUSL (3-5 courses)
@@ -274,6 +287,7 @@ Solution:
 ```
 
 **Example Notification:**
+
 ```
 Subject: 🔔 LMS Update: 4 New Activities
 
@@ -307,6 +321,7 @@ Subject: 🔔 LMS Update: 4 New Activities
 ## 🛠️ Customization Options
 
 ### Easy Customizations
+
 - ✏️ Change scan times (edit cron schedule)
 - ✏️ Modify email subject/format (edit notifier.py)
 - ✏️ Filter specific courses (add conditions)
@@ -314,6 +329,7 @@ Subject: 🔔 LMS Update: 4 New Activities
 - ✏️ Add more LMS instances
 
 ### Advanced Customizations
+
 - 🔧 Add Telegram notifications
 - 🔧 Integrate with Notion/Todoist
 - 🔧 Create mobile app
@@ -327,24 +343,28 @@ Subject: 🔔 LMS Update: 4 New Activities
 ### If Something Goes Wrong:
 
 **Login fails:**
+
 ```bash
 python scraper.py --headless False
 # Watch what happens in the browser
 ```
 
 **Email not sending:**
+
 ```bash
 python scraper.py --test-email
 # Check configuration
 ```
 
 **Setup issues:**
+
 ```bash
 python test_setup.py
 # Comprehensive system check
 ```
 
 **GitHub Actions failing:**
+
 - Check Actions tab → Logs
 - Verify all 7 secrets are set
 - Test locally first
@@ -360,19 +380,19 @@ After setup, you should have:
 ✅ **5-10 min Saved Daily** - No manual checking needed  
 ✅ **Zero Maintenance** - Runs in background  
 ✅ **Complete History** - All activities tracked  
-✅ **Peace of Mind** - System has your back  
+✅ **Peace of Mind** - System has your back
 
 ---
 
 ## 📚 Learning Resources
 
-| Topic | Resource |
-|-------|----------|
-| Selenium | [selenium.dev/documentation](https://selenium.dev/documentation) |
-| Flask | [flask.palletsprojects.com](https://flask.palletsprojects.com) |
-| GitHub Actions | [docs.github.com/actions](https://docs.github.com/actions) |
-| SQLite | [sqlite.org/docs.html](https://sqlite.org/docs.html) |
-| Python | [docs.python.org](https://docs.python.org) |
+| Topic          | Resource                                                         |
+| -------------- | ---------------------------------------------------------------- |
+| Selenium       | [selenium.dev/documentation](https://selenium.dev/documentation) |
+| Flask          | [flask.palletsprojects.com](https://flask.palletsprojects.com)   |
+| GitHub Actions | [docs.github.com/actions](https://docs.github.com/actions)       |
+| SQLite         | [sqlite.org/docs.html](https://sqlite.org/docs.html)             |
+| Python         | [docs.python.org](https://docs.python.org)                       |
 
 ---
 
@@ -403,7 +423,7 @@ You now have a **professional-grade system** that:
 **Total Setup Time:** 30-45 minutes  
 **Time Saved Per Week:** 2-3 hours  
 **Assignments Missed:** 0  
-**Peace of Mind:** Priceless  
+**Peace of Mind:** Priceless
 
 ---
 
@@ -415,6 +435,6 @@ This system will now work silently in the background, checking your courses twic
 
 ---
 
-*Built with ❤️ to help students succeed in managing multiple degree programs.*
+_Built with ❤️ to help students succeed in managing multiple degree programs._
 
-*If this helps you, consider sharing it with other students! ⭐*
+_If this helps you, consider sharing it with other students! ⭐_
