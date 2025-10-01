@@ -111,21 +111,80 @@ Go to Actions → LMS Monitor → Run workflow
 
 ```
 lms-scraper/
-├── app.py                 # Flask web application
-├── scraper.py             # Main scraping logic
-├── database.py            # Database operations
-├── notifier.py            # Email notification system
-├── requirements.txt       # Python dependencies
-├── .env.example          # Environment variables template
-├── templates/            # HTML templates
-│   ├── index.html        # Dashboard home
-│   ├── courses.html      # Courses list
-│   └── activities.html   # Activities view
-├── static/              # CSS and JS files
-│   └── style.css        # Styling
-└── .github/
-    └── workflows/
-        └── monitor.yml   # GitHub Actions workflow
+├── .github/
+│   └── workflows/
+│       └── monitor.yml          # GitHub Actions workflow for automated scanning
+├── docs/                        # 📚 All documentation
+│   ├── README.md               # Documentation index
+│   ├── GETTING_STARTED.md      # Complete getting started guide
+│   ├── SETUP_GUIDE.md          # Detailed setup instructions
+│   ├── QUICK_REFERENCE.md      # Quick reference guide
+│   ├── SCHEDULING.md           # Automatic scheduling documentation
+│   ├── SCHEDULER_QUICKSTART.md # Scheduler quick start
+│   ├── PROJECT_OVERVIEW.md     # Architecture and design
+│   ├── IMPLEMENTATION_SUMMARY.md # Implementation details
+│   └── SYSTEM_SUMMARY.md       # System features summary
+├── static/
+│   └── style.css               # Web dashboard CSS styles
+├── templates/                   # Flask HTML templates
+│   ├── base.html               # Base template
+│   ├── index.html              # Main dashboard
+│   ├── courses.html            # Courses page
+│   ├── course_detail.html      # Course detail page
+│   └── activities.html         # Activities page
+├── tests/                       # 🧪 Test scripts
+│   ├── README.md               # Test documentation
+│   ├── test_setup.py           # System setup tests
+│   └── test_course_names.py    # Course scraping tests
+│
+├── .env                         # Environment variables (create from .env.example)
+├── .env.example                # Environment variables template
+├── .gitignore                  # Git ignore rules
+├── LICENSE                     # MIT License
+├── README.md                   # This file - main documentation
+├── requirements.txt            # Python dependencies
+├── lms_data.db                 # SQLite database (created automatically)
+│
+├── app.py                      # 🌐 Flask web application
+├── scraper.py                  # 🔍 Main scraping logic (OUSL & RUSL)
+├── database.py                 # 💾 Database operations (SQLite)
+├── calendar_scraper.py         # 📅 Calendar event scraper & deadline extractor
+├── scheduler.py                # ⏰ Background task scheduler (APScheduler)
+├── notifier.py                 # 📧 Email notification system
+│
+├── start.sh                    # Linux/Mac startup script
+└── start.bat                   # Windows startup script
+```
+
+### Core Components
+
+- **`app.py`** - Flask web server with dashboard, routes, and API endpoints
+- **`scraper.py`** - Selenium-based web scraper for OUSL and RUSL Moodle sites (~900 lines)
+- **`database.py`** - SQLite database manager with all CRUD operations (~650 lines)
+- **`calendar_scraper.py`** - iCalendar event fetcher and deadline extractor from text
+- **`scheduler.py`** - APScheduler integration for automated twice-daily scanning
+- **`notifier.py`** - SMTP-based email notification system
+
+### Documentation
+
+All detailed documentation is in the `docs/` folder:
+- **Getting Started**: `docs/GETTING_STARTED.md` - New user guide
+- **Setup Guide**: `docs/SETUP_GUIDE.md` - Detailed setup walkthrough  
+- **Quick Reference**: `docs/QUICK_REFERENCE.md` - Commands and common tasks
+- **Scheduling**: `docs/SCHEDULING.md` - Auto-scan configuration
+- **Architecture**: `docs/PROJECT_OVERVIEW.md` - System design and architecture
+
+### Testing
+
+Test scripts are in the `tests/` folder:
+- **`test_setup.py`** - Validates environment setup and configuration
+- **`test_course_names.py`** - Tests scraping functionality for both universities
+
+Run tests:
+```bash
+python tests/test_setup.py
+python tests/test_course_names.py
+```
 
 ## Troubleshooting
 
