@@ -7,7 +7,7 @@ from typing import List, Dict
 class CalendarScraper:
     def __init__(self):
         self.ousl_calendar_url = "https://oulms.ou.ac.lk/calendar/export_execute.php?userid=19900&authtoken=9e92461354ae8674632a70fdaaadde2280af8dfb&preset_what=all&preset_time=custom"
-        self.rjta_calendar_url = "https://lms.aps.rjt.ac.lk/calendar/export_execute.php?userid=17234&authtoken=55a6286965183ea25486870ac8006fab00c9c038&preset_what=all&preset_time=custom"
+        self.rusl_calendar_url = "https://lms.aps.rjt.ac.lk/calendar/export_execute.php?userid=17234&authtoken=55a6286965183ea25486870ac8006fab00c9c038&preset_what=all&preset_time=custom"
     
     def fetch_calendar_events(self, url: str, lms_name: str) -> List[Dict]:
         """Fetch and parse iCal calendar events."""
@@ -55,11 +55,11 @@ class CalendarScraper:
             return []
     
     def get_all_calendar_events(self) -> List[Dict]:
-        """Get calendar events from both OUSL and RJTA."""
+        """Get calendar events from both OUSL and RUSL."""
         ousl_events = self.fetch_calendar_events(self.ousl_calendar_url, 'OUSL')
-        rjta_events = self.fetch_calendar_events(self.rjta_calendar_url, 'RJTA')
+        rusl_events = self.fetch_calendar_events(self.rusl_calendar_url, 'RUSL')
         
-        all_events = ousl_events + rjta_events
+        all_events = ousl_events + rusl_events
         all_events.sort(key=lambda x: x['date'])
         
         return all_events

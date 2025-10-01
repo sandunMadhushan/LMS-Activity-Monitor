@@ -55,8 +55,8 @@ OUSL_USERNAME=your_username
 OUSL_PASSWORD=your_password
 
 # Rajarata Credentials
-RJTA_USERNAME=your_username
-RJTA_PASSWORD=your_password
+RUSL_USERNAME=your_username
+RUSL_PASSWORD=your_password
 
 # Email Settings
 EMAIL_SENDER=your_email@gmail.com
@@ -97,8 +97,8 @@ Add these secrets:
 
 - `OUSL_USERNAME`
 - `OUSL_PASSWORD`
-- `RJTA_USERNAME`
-- `RJTA_PASSWORD`
+- `RUSL_USERNAME`
+- `RUSL_PASSWORD`
 - `EMAIL_SENDER`
 - `EMAIL_PASSWORD`
 - `EMAIL_RECIPIENT`
@@ -128,7 +128,7 @@ Use https://crontab.guru/ for help
 | `/`                 | Main dashboard with stats |
 | `/courses`          | All enrolled courses      |
 | `/courses?lms=OUSL` | Filter by OUSL            |
-| `/courses?lms=RJTA` | Filter by RJTA            |
+| `/courses?lms=RUSL` | Filter by RUSL            |
 | `/course/<id>`      | View single course        |
 | `/activities`       | All activities timeline   |
 

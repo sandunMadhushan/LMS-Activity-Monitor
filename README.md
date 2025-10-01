@@ -31,7 +31,7 @@ A web-based system to monitor multiple Moodle LMS instances for new activities, 
 
 5. Edit `.env` with your actual credentials:
    - **OUSL credentials**: Your Open University username and password
-   - **RJTA credentials**: Your Rajarata University username and password
+   - **RUSL credentials**: Your Rajarata University username and password
    - **Email settings**: Gmail address and app password (see below)
 
 ### 2. Gmail Setup for Notifications
@@ -69,8 +69,8 @@ Then visit: `http://localhost:5000`
 
    - `OUSL_USERNAME`
    - `OUSL_PASSWORD`
-   - `RJTA_USERNAME`
-   - `RJTA_PASSWORD`
+   - `RUSL_USERNAME`
+   - `RUSL_PASSWORD`
    - `EMAIL_SENDER`
    - `EMAIL_PASSWORD`
    - `EMAIL_RECIPIENT`

@@ -34,10 +34,10 @@ pip install -r requirements.txt
    - `OUSL_USERNAME`: Your OUSL username
    - `OUSL_PASSWORD`: Your OUSL password
 
-   **For RJTA (Rajarata University):**
+   **For RUSL (Rajarata University):**
 
-   - `RJTA_USERNAME`: Your Rajarata username
-   - `RJTA_PASSWORD`: Your Rajarata password
+   - `RUSL_USERNAME`: Your Rajarata username
+   - `RUSL_PASSWORD`: Your Rajarata password
 
    **For Email Notifications:**
 
@@ -109,8 +109,8 @@ You should receive a test email within a few seconds.
    | ----------------- | ------------------------------ |
    | `OUSL_USERNAME`   | Your OUSL username             |
    | `OUSL_PASSWORD`   | Your OUSL password             |
-   | `RJTA_USERNAME`   | Your Rajarata username         |
-   | `RJTA_PASSWORD`   | Your Rajarata password         |
+   | `RUSL_USERNAME`   | Your Rajarata username         |
+   | `RUSL_PASSWORD`   | Your Rajarata password         |
    | `EMAIL_SENDER`    | Your Gmail address             |
    | `EMAIL_PASSWORD`  | Your Gmail App Password        |
    | `EMAIL_RECIPIENT` | Email to receive notifications |

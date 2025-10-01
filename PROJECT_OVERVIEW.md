@@ -44,7 +44,7 @@ A comprehensive web-based system to monitor multiple Moodle LMS instances for ne
 ┌─────────────────────────────────────────────────────────────┐
 │                    Selenium Web Scraper                      │
 │  ┌──────────────────┐         ┌──────────────────┐         │
-│  │   OUSL Moodle    │         │  RJTA Moodle     │         │
+│  │   OUSL Moodle    │         │  RUSL Moodle     │         │
 │  │   - Login        │         │  - Login         │         │
 │  │   - Get Courses  │         │  - Get Courses   │         │
 │  │   - Extract      │         │  - Extract       │         │

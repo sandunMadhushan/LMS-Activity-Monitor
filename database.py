@@ -365,8 +365,8 @@ class Database:
         cursor.execute("SELECT COUNT(*) FROM courses WHERE lms_name = 'OUSL'")
         ousl_courses = cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(*) FROM courses WHERE lms_name = 'RJTA'")
-        rjta_courses = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM courses WHERE lms_name = 'RUSL'")
+        rusl_courses = cursor.fetchone()[0]
         
         conn.close()
         
@@ -378,7 +378,7 @@ class Database:
             'last_scan_time': last_scan[0] if last_scan else None,
             'last_scan_lms': last_scan[1] if last_scan else None,
             'ousl_courses': ousl_courses,
-            'rjta_courses': rjta_courses
+            'rusl_courses': rusl_courses
         }
     
     def get_upcoming_deadlines(self, limit: int = 10) -> List[Dict[str, Any]]:

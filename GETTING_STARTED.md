@@ -127,8 +127,8 @@ python scraper.py --headless False
    - Add these 7 secrets:
      - `OUSL_USERNAME`
      - `OUSL_PASSWORD`
-     - `RJTA_USERNAME`
-     - `RJTA_PASSWORD`
+     - `RUSL_USERNAME`
+     - `RUSL_PASSWORD`
      - `EMAIL_SENDER`
      - `EMAIL_PASSWORD`
      - `EMAIL_RECIPIENT`
@@ -193,7 +193,7 @@ You'll receive emails like:
     📝 Description: This week's lecture covers...
     🔗 View in Moodle →
 
-📚 RJTA
+📚 RUSL
 ──────────────────────────────
 🆕 [QUIZ] Mid-term Quiz
     📖 Course: Data Structures
@@ -216,7 +216,7 @@ Run locally: `python app.py` → Visit http://localhost:5000
 ### Courses Page
 
 - View all enrolled courses
-- Filter by university (OUSL/RJTA)
+- Filter by university (OUSL/RUSL)
 - See last checked time
 - Direct links to Moodle
 

@@ -33,22 +33,22 @@ def test_course_names():
         else:
             print(f"❌ OUSL scraping failed: {ousl_result.get('error')}")
         
-        print("\n📚 Testing RJTA Course Scraping...")
+        print("\n📚 Testing RUSL Course Scraping...")
         print("-" * 60)
-        rjta_result = scraper.scrape_rjta()
+        rusl_result = scraper.scrape_rusl()
         
-        if rjta_result.get('success'):
-            print(f"\n✅ Successfully scraped RJTA")
-            print(f"Found {rjta_result.get('courses_found', 0)} courses\n")
+        if rusl_result.get('success'):
+            print(f"\n✅ Successfully scraped RUSL")
+            print(f"Found {rusl_result.get('courses_found', 0)} courses\n")
             
             # Show first few courses
-            courses = rjta_result.get('courses', [])[:5]
+            courses = rusl_result.get('courses', [])[:5]
             for i, course in enumerate(courses, 1):
                 print(f"{i}. {course.get('name', 'Unknown')}")
                 print(f"   ID: {course.get('course_id')}")
                 print(f"   Activities: {len(course.get('activities', []))}\n")
         else:
-            print(f"❌ RJTA scraping failed: {rjta_result.get('error')}")
+            print(f"❌ RUSL scraping failed: {rusl_result.get('error')}")
         
         scraper.close_driver()
         

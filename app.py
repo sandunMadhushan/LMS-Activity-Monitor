@@ -35,7 +35,7 @@ def index():
     
     # Get activities separated by LMS
     ousl_activities = db.get_activities_by_lms('OUSL', limit=15)
-    rjta_activities = db.get_activities_by_lms('RJTA', limit=15)
+    rusl_activities = db.get_activities_by_lms('RUSL', limit=15)
     
     # Get upcoming deadlines (combined from activities, calendar, and scraped)
     # Fetch all upcoming deadlines (no time limit) and filter on frontend
@@ -60,7 +60,7 @@ def index():
                           stats=stats,
                           recent_activities=recent_activities,
                           ousl_activities=ousl_activities,
-                          rjta_activities=rjta_activities,
+                          rusl_activities=rusl_activities,
                           upcoming_deadlines=upcoming_deadlines,
                           scan_history=scan_history)
 

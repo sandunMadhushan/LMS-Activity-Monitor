@@ -82,8 +82,8 @@ def check_env_file():
     required_vars = [
         'OUSL_USERNAME',
         'OUSL_PASSWORD',
-        'RJTA_USERNAME',
-        'RJTA_PASSWORD',
+        'RUSL_USERNAME',
+        'RUSL_PASSWORD',
         'EMAIL_SENDER',
         'EMAIL_PASSWORD',
         'EMAIL_RECIPIENT'

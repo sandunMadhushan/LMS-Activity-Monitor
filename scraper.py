@@ -381,7 +381,7 @@ class MoodleScraper:
         
         return courses
     
-    def scrape_rjta(self) -> Dict[str, Any]:
+    def scrape_rusl(self) -> Dict[str, Any]:
         """Scrape Rajarata University Moodle."""
         print("\n🔍 Scraping Rajarata University Moodle...")
         
@@ -389,11 +389,11 @@ class MoodleScraper:
         if not self.driver:
             self.setup_driver()
         
-        username = os.getenv('RJTA_USERNAME')
-        password = os.getenv('RJTA_PASSWORD')
+        username = os.getenv('RUSL_USERNAME')
+        password = os.getenv('RUSL_PASSWORD')
         
         if not username or not password:
-            print("❌ RJTA credentials not found in environment variables")
+            print("❌ RUSL credentials not found in environment variables")
             return {'success': False, 'error': 'Missing credentials'}
         
         try:
@@ -423,20 +423,20 @@ class MoodleScraper:
             print("✅ Logged in successfully!")
             
             # Scrape courses
-            courses = self._scrape_rjta_courses()
+            courses = self._scrape_rusl_courses()
             
             return {
                 'success': True,
-                'lms_name': 'RJTA',
+                'lms_name': 'RUSL',
                 'courses': courses
             }
             
         except Exception as e:
-            print(f"❌ Error scraping RJTA: {e}")
+            print(f"❌ Error scraping RUSL: {e}")
             return {'success': False, 'error': str(e)}
     
-    def _scrape_rjta_courses(self) -> List[Dict[str, Any]]:
-        """Scrape all courses from RJTA dashboard."""
+    def _scrape_rusl_courses(self) -> List[Dict[str, Any]]:
+        """Scrape all courses from RUSL dashboard."""
         courses = []
         
         try:
@@ -479,7 +479,7 @@ class MoodleScraper:
                         if not course_id_match:
                             continue
                         
-                        course_id = f"rjta_{course_id_match.group(1)}"
+                        course_id = f"rusl_{course_id_match.group(1)}"
                         
                         if course_id in seen_course_ids:
                             continue
@@ -518,9 +518,9 @@ class MoodleScraper:
                         
                         print(f"  📚 Found course: {course_name}")
                         
-                        self.db.add_course(course_id, 'RJTA', course_name, course_url)
+                        self.db.add_course(course_id, 'RUSL', course_name, course_url)
                         
-                        activities = self._scrape_course_activities(course_url, course_id, 'RJTA')
+                        activities = self._scrape_course_activities(course_url, course_id, 'RUSL')
                         
                         courses.append({
                             'course_id': course_id,
@@ -552,7 +552,7 @@ class MoodleScraper:
                         if not course_id_match:
                             continue
                         
-                        course_id = f"rjta_{course_id_match.group(1)}"
+                        course_id = f"rusl_{course_id_match.group(1)}"
                         
                         if course_id in seen_course_ids:
                             continue
@@ -590,9 +590,9 @@ class MoodleScraper:
                         
                         print(f"  📚 Found course: {course_name}")
                         
-                        self.db.add_course(course_id, 'RJTA', course_name, course_url)
+                        self.db.add_course(course_id, 'RUSL', course_name, course_url)
                         
-                        activities = self._scrape_course_activities(course_url, course_id, 'RJTA')
+                        activities = self._scrape_course_activities(course_url, course_id, 'RUSL')
                         
                         courses.append({
                             'course_id': course_id,
@@ -736,7 +736,7 @@ class MoodleScraper:
         
         results = {
             'ousl': None,
-            'rjta': None,
+            'rusl': None,
             'total_new_activities': 0
         }
         
@@ -758,22 +758,22 @@ class MoodleScraper:
                 self.db.add_scan_history('OUSL', 0, 0, 0, 'failed', 
                                         ousl_result.get('error'))
             
-            # Scrape RJTA
-            rjta_result = self.scrape_rjta()
-            results['rjta'] = rjta_result
+            # Scrape RUSL
+            rusl_result = self.scrape_rusl()
+            results['rusl'] = rusl_result
             
-            if rjta_result['success']:
-                total_courses = len(rjta_result['courses'])
-                total_activities = sum(len(c['activities']) for c in rjta_result['courses'])
+            if rusl_result['success']:
+                total_courses = len(rusl_result['courses'])
+                total_activities = sum(len(c['activities']) for c in rusl_result['courses'])
                 new_activities = sum(sum(1 for a in c['activities'] if a.get('is_new')) 
-                                   for c in rjta_result['courses'])
+                                   for c in rusl_result['courses'])
                 
-                self.db.add_scan_history('RJTA', total_courses, total_activities, 
+                self.db.add_scan_history('RUSL', total_courses, total_activities, 
                                         new_activities, 'success')
                 results['total_new_activities'] += new_activities
             else:
-                self.db.add_scan_history('RJTA', 0, 0, 0, 'failed', 
-                                        rjta_result.get('error'))
+                self.db.add_scan_history('RUSL', 0, 0, 0, 'failed', 
+                                        rusl_result.get('error'))
             
         except Exception as e:
             print(f"❌ Error during scan: {str(e)}")

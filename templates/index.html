@@ -4,9 +4,13 @@ endblock %} {% block content %}
   <div class="page-header">
     <h1>📊 Dashboard</h1>
     <div class="actions">
-      <button onclick="syncCalendar()" class="btn btn-primary" title="Auto-syncs daily at 9 AM & 9 PM">
+      <button
+        onclick="syncCalendar()"
+        class="btn btn-primary"
+        title="Auto-syncs daily at 9 AM & 9 PM"
+      >
         <i class="fas fa-calendar-check"></i> Sync Calendar
-        <span style="font-size: 0.7em; opacity: 0.8;">🕒 Auto</span>
+        <span style="font-size: 0.7em; opacity: 0.8">🕒 Auto</span>
       </button>
       <button onclick="triggerScan()" class="btn btn-primary">
         <i class="fas fa-sync"></i> Run Scan Now
@@ -26,7 +30,7 @@ endblock %} {% block content %}
         <h3>{{ stats.total_courses }}</h3>
         <p>Total Courses</p>
         <small
-          >OUSL: {{ stats.ousl_courses }} | RJTA: {{ stats.rjta_courses
+          >OUSL: {{ stats.ousl_courses }} | RUSL: {{ stats.rusl_courses
           }}</small
         >
       </div>
@@ -67,9 +71,18 @@ endblock %} {% block content %}
   </div>
 
   <!-- Scheduler Info -->
-  <div class="alert alert-success" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+  <div
+    class="alert alert-success"
+    style="
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+    "
+  >
     <i class="fas fa-clock"></i>
-    <strong>📅 Automatic Calendar Sync:</strong> Calendar events are automatically synced daily at <strong>9:00 AM</strong> and <strong>9:00 PM</strong>.
+    <strong>📅 Automatic Calendar Sync:</strong> Calendar events are
+    automatically synced daily at <strong>9:00 AM</strong> and
+    <strong>9:00 PM</strong>.
   </div>
 
   {% if stats.new_activities > 0 %}
@@ -83,10 +96,17 @@ endblock %} {% block content %}
   <!-- Upcoming Deadlines Section - Tabbed by University -->
   {% if upcoming_deadlines %}
   <div class="card deadline-card">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div
+      class="card-header"
+      style="display: flex; justify-content: space-between; align-items: center"
+    >
       <h2><i class="fas fa-exclamation-triangle"></i> Upcoming Deadlines</h2>
       <div class="deadline-filter">
-        <button class="filter-btn active" onclick="filterDeadlines(30)" data-days="30">
+        <button
+          class="filter-btn active"
+          onclick="filterDeadlines(30)"
+          data-days="30"
+        >
           <i class="fas fa-calendar-day"></i> Next 30 Days
         </button>
         <button class="filter-btn" onclick="filterDeadlines(0)" data-days="0">
@@ -95,18 +115,26 @@ endblock %} {% block content %}
       </div>
     </div>
     <div class="card-body">
-      <!-- Tabs for OUSL and RJTA -->
+      <!-- Tabs for OUSL and RUSL -->
       <div class="tabs">
-        <button class="tab-button active" onclick="switchDeadlineTab(event, 'ousl-deadlines')">
+        <button
+          class="tab-button active"
+          onclick="switchDeadlineTab(event, 'ousl-deadlines')"
+        >
           <i class="fas fa-university"></i> OUSL
           <span class="tab-count" id="ousl-count">
-            {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'OUSL')|list|length }}
+            {{ upcoming_deadlines|selectattr('lms_name', 'equalto',
+            'OUSL')|list|length }}
           </span>
         </button>
-        <button class="tab-button" onclick="switchDeadlineTab(event, 'rjta-deadlines')">
-          <i class="fas fa-university"></i> RJTA
-          <span class="tab-count" id="rjta-count">
-            {{ upcoming_deadlines|selectattr('lms_name', 'equalto', 'RJTA')|list|length }}
+        <button
+          class="tab-button"
+          onclick="switchDeadlineTab(event, 'rusl-deadlines')"
+        >
+          <i class="fas fa-university"></i> RUSL
+          <span class="tab-count" id="rusl-count">
+            {{ upcoming_deadlines|selectattr('lms_name', 'equalto',
+            'RUSL')|list|length }}
           </span>
         </button>
       </div>
@@ -114,15 +142,20 @@ endblock %} {% block content %}
       <!-- OUSL Deadlines -->
       <div id="ousl-deadlines" class="tab-content active">
         <div class="deadline-list">
-          {% for activity in upcoming_deadlines %}
-          {% if activity.lms_name == 'OUSL' %}
-          <div class="deadline-item {% if activity.is_new %}new{% endif %}" data-deadline-date="{{ activity.deadline_date }}">
+          {% for activity in upcoming_deadlines %} {% if activity.lms_name ==
+          'OUSL' %}
+          <div
+            class="deadline-item {% if activity.is_new %}new{% endif %}"
+            data-deadline-date="{{ activity.deadline_date }}"
+          >
             <div class="deadline-date">
               <div class="date-icon">
                 <i class="fas fa-calendar-alt"></i>
               </div>
               <div class="date-text">
-                <strong>{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong>
+                <strong
+                  >{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong
+                >
                 {% if activity.source == 'scraped' %}
                 <small>All day</small>
                 {% else %}
@@ -132,7 +165,10 @@ endblock %} {% block content %}
             </div>
             <div class="deadline-content">
               {% if activity.source %}
-              <span class="activity-type" style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}">
+              <span
+                class="activity-type"
+                style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}"
+              >
                 {{ activity.source|capitalize }}
               </span>
               {% elif activity.activity_type %}
@@ -143,8 +179,7 @@ endblock %} {% block content %}
               <p class="activity-course">
                 <i class="fas fa-book"></i> {{ activity.course_name }}
               </p>
-              {% endif %}
-              {% if activity.location %}
+              {% endif %} {% if activity.location %}
               <p class="activity-location">
                 <i class="fas fa-map-marker-alt"></i> {{ activity.location }}
               </p>
@@ -156,10 +191,10 @@ endblock %} {% block content %}
             </a>
             {% endif %}
           </div>
-          {% endif %}
-          {% endfor %}
+          {% endif %} {% endfor %}
         </div>
-        {% if upcoming_deadlines|selectattr('lms_name', 'equalto', 'OUSL')|list|length == 0 %}
+        {% if upcoming_deadlines|selectattr('lms_name', 'equalto',
+        'OUSL')|list|length == 0 %}
         <div class="empty-state">
           <i class="fas fa-check-circle"></i>
           <p>No upcoming deadlines for OUSL</p>
@@ -167,18 +202,23 @@ endblock %} {% block content %}
         {% endif %}
       </div>
 
-      <!-- RJTA Deadlines -->
-      <div id="rjta-deadlines" class="tab-content">
+      <!-- RUSL Deadlines -->
+      <div id="rusl-deadlines" class="tab-content">
         <div class="deadline-list">
-          {% for activity in upcoming_deadlines %}
-          {% if activity.lms_name == 'RJTA' %}
-          <div class="deadline-item {% if activity.is_new %}new{% endif %}" data-deadline-date="{{ activity.deadline_date }}">
+          {% for activity in upcoming_deadlines %} {% if activity.lms_name ==
+          'RUSL' %}
+          <div
+            class="deadline-item {% if activity.is_new %}new{% endif %}"
+            data-deadline-date="{{ activity.deadline_date }}"
+          >
             <div class="deadline-date">
               <div class="date-icon">
                 <i class="fas fa-calendar-alt"></i>
               </div>
               <div class="date-text">
-                <strong>{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong>
+                <strong
+                  >{{ activity.deadline_date|datetime('%b %d, %Y') }}</strong
+                >
                 {% if activity.source == 'scraped' %}
                 <small>All day</small>
                 {% else %}
@@ -188,7 +228,10 @@ endblock %} {% block content %}
             </div>
             <div class="deadline-content">
               {% if activity.source %}
-              <span class="activity-type" style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}">
+              <span
+                class="activity-type"
+                style="background: {% if activity.source == 'calendar' %}#667eea{% else %}#764ba2{% endif %}"
+              >
                 {{ activity.source|capitalize }}
               </span>
               {% elif activity.activity_type %}
@@ -199,8 +242,7 @@ endblock %} {% block content %}
               <p class="activity-course">
                 <i class="fas fa-book"></i> {{ activity.course_name }}
               </p>
-              {% endif %}
-              {% if activity.location %}
+              {% endif %} {% if activity.location %}
               <p class="activity-location">
                 <i class="fas fa-map-marker-alt"></i> {{ activity.location }}
               </p>
@@ -212,13 +254,13 @@ endblock %} {% block content %}
             </a>
             {% endif %}
           </div>
-          {% endif %}
-          {% endfor %}
+          {% endif %} {% endfor %}
         </div>
-        {% if upcoming_deadlines|selectattr('lms_name', 'equalto', 'RJTA')|list|length == 0 %}
+        {% if upcoming_deadlines|selectattr('lms_name', 'equalto',
+        'RUSL')|list|length == 0 %}
         <div class="empty-state">
           <i class="fas fa-check-circle"></i>
-          <p>No upcoming deadlines for RJTA</p>
+          <p>No upcoming deadlines for RUSL</p>
         </div>
         {% endif %}
       </div>
@@ -237,8 +279,8 @@ endblock %} {% block content %}
       <button class="tab-button active" onclick="openTab(event, 'ousl')">
         <i class="fas fa-university"></i> OUSL ({{ ousl_activities|length }})
       </button>
-      <button class="tab-button" onclick="openTab(event, 'rjta')">
-        <i class="fas fa-university"></i> Rajarata ({{ rjta_activities|length
+      <button class="tab-button" onclick="openTab(event, 'rusl')">
+        <i class="fas fa-university"></i> Rajarata ({{ rusl_activities|length
         }})
       </button>
       <button class="tab-button" onclick="openTab(event, 'all')">
@@ -305,12 +347,12 @@ endblock %} {% block content %}
       </div>
     </div>
 
-    <!-- RJTA Tab -->
-    <div id="rjta" class="tab-content">
+    <!-- RUSL Tab -->
+    <div id="rusl" class="tab-content">
       <div class="card-body">
-        {% if rjta_activities %}
+        {% if rusl_activities %}
         <div class="activity-list">
-          {% for activity in rjta_activities %}
+          {% for activity in rusl_activities %}
           <div class="activity-item {% if activity.is_new %}new{% endif %}">
             <div class="activity-icon">
               {% if activity.activity_type == 'assign' %}
@@ -352,8 +394,8 @@ endblock %} {% block content %}
           {% endfor %}
         </div>
         <div style="text-align: center; margin-top: 1rem">
-          <a href="/courses?lms=RJTA" class="btn btn-secondary"
-            >View All RJTA Courses</a
+          <a href="/courses?lms=RUSL" class="btn btn-secondary"
+            >View All RUSL Courses</a
           >
         </div>
         {% else %}
@@ -504,46 +546,48 @@ endblock %} {% block content %}
 
   function filterDeadlines(days) {
     // Get all filter buttons
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(btn => {
-      btn.classList.remove('active');
-      if (parseInt(btn.getAttribute('data-days')) === days) {
-        btn.classList.add('active');
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    filterButtons.forEach((btn) => {
+      btn.classList.remove("active");
+      if (parseInt(btn.getAttribute("data-days")) === days) {
+        btn.classList.add("active");
       }
     });
 
     // Get all deadline items
-    const deadlineItems = document.querySelectorAll('.deadline-item');
+    const deadlineItems = document.querySelectorAll(".deadline-item");
     let ouslCount = 0;
-    let rjtaCount = 0;
-    
-    const now = new Date();
-    const thirtyDaysLater = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+    let ruslCount = 0;
 
-    deadlineItems.forEach(item => {
-      const deadlineDate = new Date(item.getAttribute('data-deadline-date'));
-      const lmsName = item.closest('.tab-content').id.includes('ousl') ? 'ousl' : 'rjta';
-      
+    const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    deadlineItems.forEach((item) => {
+      const deadlineDate = new Date(item.getAttribute("data-deadline-date"));
+      const lmsName = item.closest(".tab-content").id.includes("ousl")
+        ? "ousl"
+        : "rusl";
+
       if (days === 0) {
         // Show all upcoming deadlines
-        item.classList.remove('hidden');
-        if (lmsName === 'ousl') ouslCount++;
-        else rjtaCount++;
+        item.classList.remove("hidden");
+        if (lmsName === "ousl") ouslCount++;
+        else ruslCount++;
       } else {
         // Show only deadlines within specified days
         if (deadlineDate <= thirtyDaysLater) {
-          item.classList.remove('hidden');
-          if (lmsName === 'ousl') ouslCount++;
-          else rjtaCount++;
+          item.classList.remove("hidden");
+          if (lmsName === "ousl") ouslCount++;
+          else ruslCount++;
         } else {
-          item.classList.add('hidden');
+          item.classList.add("hidden");
         }
       }
     });
 
     // Update tab counts
-    document.getElementById('ousl-count').textContent = ouslCount;
-    document.getElementById('rjta-count').textContent = rjtaCount;
+    document.getElementById("ousl-count").textContent = ouslCount;
+    document.getElementById("rusl-count").textContent = ruslCount;
   }
 
   function showNotification(message, type = "info") {

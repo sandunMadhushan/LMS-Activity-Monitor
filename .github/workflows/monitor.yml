@@ -53,8 +53,8 @@ jobs:
         env:
           OUSL_USERNAME: ${{ secrets.OUSL_USERNAME }}
           OUSL_PASSWORD: ${{ secrets.OUSL_PASSWORD }}
-          RJTA_USERNAME: ${{ secrets.RJTA_USERNAME }}
-          RJTA_PASSWORD: ${{ secrets.RJTA_PASSWORD }}
+          RUSL_USERNAME: ${{ secrets.RUSL_USERNAME }}
+          RUSL_PASSWORD: ${{ secrets.RUSL_PASSWORD }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
