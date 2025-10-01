@@ -201,35 +201,43 @@ class MoodleScraper:
                         # Try to extract course name from the card
                         course_name = None
                         
-                        # Look for common Moodle course name classes within the card (not just in link)
-                        name_elements = (
-                            card.find('span', class_=re.compile(r'coursename|multiline')) or
-                            card.find('h3', class_=re.compile(r'coursename|course-name')) or
-                            card.find('div', class_=re.compile(r'coursename|course-name')) or
-                            card.find('span', class_='text-truncate')
-                        )
+                        # Method 1: Look for <a> with class "aalink coursename" (OUSL specific)
+                        coursename_link = card.find('a', class_='aalink coursename')
+                        if coursename_link:
+                            # Get all text but filter out sr-only content
+                            # Remove all sr-only elements first
+                            for sr_only in coursename_link.find_all(class_='sr-only'):
+                                sr_only.decompose()
+                            for hidden in coursename_link.find_all(class_='hidden'):
+                                hidden.decompose()
+                            
+                            course_name = coursename_link.get_text(strip=True)
+                            if course_name:
+                                print(f"  [DEBUG] Found name from aalink coursename: '{course_name}'")
                         
-                        if name_elements:
-                            course_name = name_elements.get_text(strip=True)
-                            print(f"  [DEBUG] Found name from card element: '{course_name}'")
-                        
-                        # Try to find any text in the card that's not "Course image"
+                        # Method 2: Look for heading elements (h1-h5)
                         if not course_name:
-                            all_text_elements = card.find_all(text=True)
-                            skip_texts = ['course image', 'last checked:', 'added:', 'view activities', 
-                                        'open in moodle', 'course is starred', 'star this course']
-                            for text in all_text_elements:
-                                text_clean = text.strip()
-                                if (text_clean and 
-                                    text_clean.lower() not in skip_texts and 
-                                    len(text_clean) > 5 and
-                                    not text_clean.startswith('Last checked:') and
-                                    not text_clean.startswith('Added:')):
-                                    course_name = text_clean
-                                    print(f"  [DEBUG] Found name from card text: '{course_name}'")
-                                    break
+                            for tag in ['h3', 'h4', 'h5', 'h2']:
+                                heading = card.find(tag)
+                                if heading:
+                                    course_name = heading.get_text(strip=True)
+                                    if course_name and course_name.lower() != 'course image':
+                                        print(f"  [DEBUG] Found name from {tag}: '{course_name}'")
+                                        break
                         
-                        if not course_name or course_name.lower() == 'course image':
+                        # Method 3: Look for common Moodle course name classes
+                        if not course_name:
+                            name_elements = (
+                                card.find('span', class_=re.compile(r'coursename|multiline')) or
+                                card.find('div', class_=re.compile(r'coursename|course-name')) or
+                                card.find('span', class_='text-truncate')
+                            )
+                            
+                            if name_elements:
+                                course_name = name_elements.get_text(strip=True)
+                                print(f"  [DEBUG] Found name from class: '{course_name}'")
+                        
+                        if not course_name or course_name.lower() in ['course image', 'course name', 'course is starred']:
                             print(f"  [DEBUG] Skipping - no valid course name found in card")
                             continue
                         
@@ -444,27 +452,32 @@ class MoodleScraper:
                         # Try to extract course name from the card
                         course_name = None
                         
-                        # Look for common Moodle course name classes within the card
-                        name_elements = (
-                            card.find('span', class_=re.compile(r'coursename|multiline')) or
-                            card.find('h3', class_=re.compile(r'coursename|course-name')) or
-                            card.find('div', class_=re.compile(r'coursename|course-name')) or
-                            card.find('span', class_='text-truncate')
-                        )
+                        # Method 1: Look for <a> with class "aalink coursename" (Moodle standard)
+                        coursename_link = card.find('a', class_='aalink coursename')
+                        if coursename_link:
+                            # Get all text but filter out sr-only content
+                            for sr_only in coursename_link.find_all(class_='sr-only'):
+                                sr_only.decompose()
+                            for hidden in coursename_link.find_all(class_='hidden'):
+                                hidden.decompose()
+                            
+                            course_name = coursename_link.get_text(strip=True)
+                            if course_name:
+                                print(f"  [DEBUG] Found name from aalink coursename: '{course_name}'")
                         
-                        if name_elements:
-                            course_name = name_elements.get_text(strip=True)
-                        
-                        # If still no name, try to get non-image text from the link
+                        # Method 2: Look for common Moodle course name classes
                         if not course_name:
-                            for element in link.descendants:
-                                if element.name == 'span' and element.get_text(strip=True):
-                                    text = element.get_text(strip=True)
-                                    if text.lower() != 'course image' and len(text) > 3:
-                                        course_name = text
-                                        break
+                            name_elements = (
+                                card.find('span', class_=re.compile(r'coursename|multiline')) or
+                                card.find('h3', class_=re.compile(r'coursename|course-name')) or
+                                card.find('div', class_=re.compile(r'coursename|course-name')) or
+                                card.find('span', class_='text-truncate')
+                            )
+                            
+                            if name_elements:
+                                course_name = name_elements.get_text(strip=True)
                         
-                        if not course_name or course_name.lower() == 'course image':
+                        if not course_name or course_name.lower() in ['course image', 'course name', 'course is starred']:
                             continue
                         
                         print(f"  📚 Found course: {course_name}")
