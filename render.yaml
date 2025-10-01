@@ -3,35 +3,11 @@ services:
   - type: web
     name: LMS-Activity-Monitor
     env: python
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: |
+      pip install -r requirements.txt
+      # Download latest database from GitHub repo
+      curl -L -o lms_data.db https://raw.githubusercontent.com/sandunMadhushan/LMS-Activity-Monitor/master/lms_data.db || echo "Database not found in repo yet"
     startCommand: "gunicorn app:app"
-    envVars:
-      - key: OUSL_USERNAME
-        sync: false
-      - key: OUSL_PASSWORD
-        sync: false
-      - key: RUSL_USERNAME
-        sync: false
-      - key: RUSL_PASSWORD
-        sync: false
-      - key: EMAIL_SENDER
-        sync: false
-      - key: EMAIL_PASSWORD
-        sync: false
-      - key: EMAIL_RECIPIENT
-        sync: false
-      - key: SMTP_SERVER
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: 587
-    
-  # Cron Job (Scheduled Scraper)
-  - type: cron
-    name: LMS-Activity-Monitor-Job
-    env: python
-    schedule: "0 1,13 * * *"  # Run at 1 AM and 1 PM UTC daily
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python scraper.py --headless True"
     envVars:
       - key: OUSL_USERNAME
         sync: false
