@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import hashlib
 from typing import List, Dict, Any, Optional
@@ -13,6 +14,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import re
+
+# Fix Windows console encoding for emojis
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
 
 from database import Database
 from notifier import Notifier
@@ -58,6 +66,10 @@ class MoodleScraper:
     def scrape_ousl(self) -> Dict[str, Any]:
         """Scrape Open University of Sri Lanka Moodle."""
         print("\n🔍 Scraping OUSL Moodle...")
+        
+        # Ensure driver is set up
+        if not self.driver:
+            self.setup_driver()
         
         username = os.getenv('OUSL_USERNAME')
         password = os.getenv('OUSL_PASSWORD')
@@ -128,6 +140,8 @@ class MoodleScraper:
             
         except Exception as e:
             print(f"❌ Error scraping OUSL: {e}")
+            import traceback
+            traceback.print_exc()
             return {'success': False, 'error': str(e)}
     
     def _scrape_ousl_courses(self) -> List[Dict[str, Any]]:
@@ -142,58 +156,179 @@ class MoodleScraper:
             # Get page source and parse with BeautifulSoup
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             
-            # Find all course cards/links
-            course_elements = soup.find_all('div', class_=re.compile(r'course|card'))
+            # Find all course cards - Modern Moodle uses these classes
+            # Try multiple selectors for different Moodle versions
+            course_cards = (
+                soup.find_all('div', class_=re.compile(r'coursebox|course-listitem|course-info-container|dashboard-card')) or
+                soup.find_all('div', class_='card-body') or
+                soup.find_all('div', class_=re.compile(r'card.*course'))
+            )
+            
+            # Also get all course links as fallback
             course_links = soup.find_all('a', href=re.compile(r'/course/view\.php\?id='))
             
             seen_course_ids = set()
             
-            for link in course_links:
-                try:
-                    course_url = link.get('href')
-                    if not course_url:
+            # First try: Extract from course cards
+            if course_cards:
+                print(f"  Found {len(course_cards)} course cards")
+                for card in course_cards:
+                    try:
+                        # Find the course link within the card
+                        link = card.find('a', href=re.compile(r'/course/view\.php\?id='))
+                        if not link:
+                            continue
+                        
+                        course_url = link.get('href')
+                        if not course_url:
+                            continue
+                        
+                        # Make URL absolute
+                        if course_url.startswith('/'):
+                            course_url = 'https://oulms.ou.ac.lk' + course_url
+                        
+                        # Extract course ID
+                        course_id_match = re.search(r'id=(\d+)', course_url)
+                        if not course_id_match:
+                            continue
+                        
+                        course_id = f"ousl_{course_id_match.group(1)}"
+                        
+                        if course_id in seen_course_ids:
+                            continue
+                        seen_course_ids.add(course_id)
+                        
+                        # Try to extract course name from the card
+                        course_name = None
+                        
+                        # Look for common Moodle course name classes within the card (not just in link)
+                        name_elements = (
+                            card.find('span', class_=re.compile(r'coursename|multiline')) or
+                            card.find('h3', class_=re.compile(r'coursename|course-name')) or
+                            card.find('div', class_=re.compile(r'coursename|course-name')) or
+                            card.find('span', class_='text-truncate')
+                        )
+                        
+                        if name_elements:
+                            course_name = name_elements.get_text(strip=True)
+                            print(f"  [DEBUG] Found name from card element: '{course_name}'")
+                        
+                        # Try to find any text in the card that's not "Course image"
+                        if not course_name:
+                            all_text_elements = card.find_all(text=True)
+                            skip_texts = ['course image', 'last checked:', 'added:', 'view activities', 
+                                        'open in moodle', 'course is starred', 'star this course']
+                            for text in all_text_elements:
+                                text_clean = text.strip()
+                                if (text_clean and 
+                                    text_clean.lower() not in skip_texts and 
+                                    len(text_clean) > 5 and
+                                    not text_clean.startswith('Last checked:') and
+                                    not text_clean.startswith('Added:')):
+                                    course_name = text_clean
+                                    print(f"  [DEBUG] Found name from card text: '{course_name}'")
+                                    break
+                        
+                        if not course_name or course_name.lower() == 'course image':
+                            print(f"  [DEBUG] Skipping - no valid course name found in card")
+                            continue
+                        
+                        print(f"  📚 Found course: {course_name}")
+                        
+                        # Add to database
+                        self.db.add_course(course_id, 'OUSL', course_name, course_url)
+                        
+                        # Scrape course activities
+                        activities = self._scrape_course_activities(course_url, course_id)
+                        
+                        courses.append({
+                            'course_id': course_id,
+                            'name': course_name,
+                            'url': course_url,
+                            'activities': activities
+                        })
+                        
+                        time.sleep(2)  # Be respectful
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Error processing course card: {e}")
                         continue
-                    
-                    # Make URL absolute
-                    if course_url.startswith('/'):
-                        course_url = 'https://oulms.ou.ac.lk' + course_url
-                    
-                    # Extract course ID
-                    course_id_match = re.search(r'id=(\d+)', course_url)
-                    if not course_id_match:
+            
+            # Fallback: Try direct link extraction if no cards found
+            if not courses and course_links:
+                print(f"  Trying fallback method with {len(course_links)} links")
+                
+                for link in course_links:
+                    try:
+                        course_url = link.get('href')
+                        if not course_url:
+                            continue
+                        
+                        # Make URL absolute
+                        if course_url.startswith('/'):
+                            course_url = 'https://oulms.ou.ac.lk' + course_url
+                        
+                        # Extract course ID
+                        course_id_match = re.search(r'id=(\d+)', course_url)
+                        if not course_id_match:
+                            continue
+                        
+                        course_id = f"ousl_{course_id_match.group(1)}"
+                        
+                        if course_id in seen_course_ids:
+                            continue
+                        seen_course_ids.add(course_id)
+                        
+                        # Try multiple ways to extract course name
+                        course_name = None
+                        
+                        # Method 1: Try to find span with coursename class
+                        coursename_span = link.find('span', class_='coursename')
+                        if coursename_span:
+                            course_name = coursename_span.get_text(strip=True)
+                        
+                        # Method 2: Try to find any span inside the link
+                        if not course_name:
+                            spans = link.find_all('span')
+                            for span in spans:
+                                text = span.get_text(strip=True)
+                                if text and text.lower() != 'course image' and len(text) > 3:
+                                    course_name = text
+                                    break
+                        
+                        # Method 3: Get all text from link, excluding "Course image"
+                        if not course_name:
+                            course_name = link.get_text(strip=True)
+                            if 'Course image' in course_name:
+                                course_name = course_name.replace('Course image', '').strip()
+                        
+                        # Method 4: Try to get from title or aria-label attribute
+                        if not course_name or len(course_name) < 3:
+                            course_name = link.get('title') or link.get('aria-label')
+                        
+                        if not course_name or len(course_name) < 3 or course_name.lower() == 'course image':
+                            continue
+                        
+                        print(f"  📚 Found course: {course_name}")
+                        
+                        # Add to database
+                        self.db.add_course(course_id, 'OUSL', course_name, course_url)
+                        
+                        # Scrape course activities
+                        activities = self._scrape_course_activities(course_url, course_id)
+                        
+                        courses.append({
+                            'course_id': course_id,
+                            'name': course_name,
+                            'url': course_url,
+                            'activities': activities
+                        })
+                        
+                        time.sleep(2)  # Be respectful
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Error processing course: {e}")
                         continue
-                    
-                    course_id = f"ousl_{course_id_match.group(1)}"
-                    
-                    if course_id in seen_course_ids:
-                        continue
-                    seen_course_ids.add(course_id)
-                    
-                    course_name = link.get_text(strip=True)
-                    
-                    if not course_name or len(course_name) < 3:
-                        continue
-                    
-                    print(f"  📚 Found course: {course_name}")
-                    
-                    # Add to database
-                    self.db.add_course(course_id, 'OUSL', course_name, course_url)
-                    
-                    # Scrape course activities
-                    activities = self._scrape_course_activities(course_url, course_id)
-                    
-                    courses.append({
-                        'course_id': course_id,
-                        'name': course_name,
-                        'url': course_url,
-                        'activities': activities
-                    })
-                    
-                    time.sleep(2)  # Be respectful
-                    
-                except Exception as e:
-                    print(f"  ⚠️ Error processing course: {e}")
-                    continue
             
             print(f"✅ Found {len(courses)} courses")
             
@@ -205,6 +340,10 @@ class MoodleScraper:
     def scrape_rjta(self) -> Dict[str, Any]:
         """Scrape Rajarata University Moodle."""
         print("\n🔍 Scraping Rajarata University Moodle...")
+        
+        # Ensure driver is set up
+        if not self.driver:
+            self.setup_driver()
         
         username = os.getenv('RJTA_USERNAME')
         password = os.getenv('RJTA_PASSWORD')
@@ -263,53 +402,161 @@ class MoodleScraper:
             
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             
-            # Find course links
+            # Find all course cards - Modern Moodle uses these classes
+            course_cards = (
+                soup.find_all('div', class_=re.compile(r'coursebox|course-listitem|course-info-container|dashboard-card')) or
+                soup.find_all('div', class_='card-body') or
+                soup.find_all('div', class_=re.compile(r'card.*course'))
+            )
+            
+            # Also get all course links as fallback
             course_links = soup.find_all('a', href=re.compile(r'/course/view\.php\?id='))
             
             seen_course_ids = set()
             
-            for link in course_links:
-                try:
-                    course_url = link.get('href')
-                    if not course_url:
+            # First try: Extract from course cards
+            if course_cards:
+                print(f"  Found {len(course_cards)} course cards")
+                for card in course_cards:
+                    try:
+                        # Find the course link within the card
+                        link = card.find('a', href=re.compile(r'/course/view\.php\?id='))
+                        if not link:
+                            continue
+                        
+                        course_url = link.get('href')
+                        if not course_url:
+                            continue
+                        
+                        if course_url.startswith('/'):
+                            course_url = 'https://lms.aps.rjt.ac.lk' + course_url
+                        
+                        course_id_match = re.search(r'id=(\d+)', course_url)
+                        if not course_id_match:
+                            continue
+                        
+                        course_id = f"rjta_{course_id_match.group(1)}"
+                        
+                        if course_id in seen_course_ids:
+                            continue
+                        seen_course_ids.add(course_id)
+                        
+                        # Try to extract course name from the card
+                        course_name = None
+                        
+                        # Look for common Moodle course name classes within the card
+                        name_elements = (
+                            card.find('span', class_=re.compile(r'coursename|multiline')) or
+                            card.find('h3', class_=re.compile(r'coursename|course-name')) or
+                            card.find('div', class_=re.compile(r'coursename|course-name')) or
+                            card.find('span', class_='text-truncate')
+                        )
+                        
+                        if name_elements:
+                            course_name = name_elements.get_text(strip=True)
+                        
+                        # If still no name, try to get non-image text from the link
+                        if not course_name:
+                            for element in link.descendants:
+                                if element.name == 'span' and element.get_text(strip=True):
+                                    text = element.get_text(strip=True)
+                                    if text.lower() != 'course image' and len(text) > 3:
+                                        course_name = text
+                                        break
+                        
+                        if not course_name or course_name.lower() == 'course image':
+                            continue
+                        
+                        print(f"  📚 Found course: {course_name}")
+                        
+                        self.db.add_course(course_id, 'RJTA', course_name, course_url)
+                        
+                        activities = self._scrape_course_activities(course_url, course_id)
+                        
+                        courses.append({
+                            'course_id': course_id,
+                            'name': course_name,
+                            'url': course_url,
+                            'activities': activities
+                        })
+                        
+                        time.sleep(2)  # Be respectful
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Error processing course card: {e}")
                         continue
-                    
-                    if course_url.startswith('/'):
-                        course_url = 'https://lms.aps.rjt.ac.lk' + course_url
-                    
-                    course_id_match = re.search(r'id=(\d+)', course_url)
-                    if not course_id_match:
+            
+            # Fallback: Try direct link extraction if no cards found
+            if not courses and course_links:
+                print(f"  Trying fallback method with {len(course_links)} links")
+                
+                for link in course_links:
+                    try:
+                        course_url = link.get('href')
+                        if not course_url:
+                            continue
+                        
+                        if course_url.startswith('/'):
+                            course_url = 'https://lms.aps.rjt.ac.lk' + course_url
+                        
+                        course_id_match = re.search(r'id=(\d+)', course_url)
+                        if not course_id_match:
+                            continue
+                        
+                        course_id = f"rjta_{course_id_match.group(1)}"
+                        
+                        if course_id in seen_course_ids:
+                            continue
+                        seen_course_ids.add(course_id)
+                        
+                        # Try multiple ways to extract course name
+                        course_name = None
+                        
+                        # Method 1: Try to find span with coursename class
+                        coursename_span = link.find('span', class_='coursename')
+                        if coursename_span:
+                            course_name = coursename_span.get_text(strip=True)
+                        
+                        # Method 2: Try to find any span inside the link
+                        if not course_name:
+                            spans = link.find_all('span')
+                            for span in spans:
+                                text = span.get_text(strip=True)
+                                if text and text.lower() != 'course image' and len(text) > 3:
+                                    course_name = text
+                                    break
+                        
+                        # Method 3: Get all text from link, excluding "Course image"
+                        if not course_name:
+                            course_name = link.get_text(strip=True)
+                            if 'Course image' in course_name:
+                                course_name = course_name.replace('Course image', '').strip()
+                        
+                        # Method 4: Try to get from title or aria-label attribute
+                        if not course_name or len(course_name) < 3:
+                            course_name = link.get('title') or link.get('aria-label')
+                        
+                        if not course_name or len(course_name) < 3 or course_name.lower() == 'course image':
+                            continue
+                        
+                        print(f"  📚 Found course: {course_name}")
+                        
+                        self.db.add_course(course_id, 'RJTA', course_name, course_url)
+                        
+                        activities = self._scrape_course_activities(course_url, course_id)
+                        
+                        courses.append({
+                            'course_id': course_id,
+                            'name': course_name,
+                            'url': course_url,
+                            'activities': activities
+                        })
+                        
+                        time.sleep(2)
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Error processing course: {e}")
                         continue
-                    
-                    course_id = f"rjta_{course_id_match.group(1)}"
-                    
-                    if course_id in seen_course_ids:
-                        continue
-                    seen_course_ids.add(course_id)
-                    
-                    course_name = link.get_text(strip=True)
-                    
-                    if not course_name or len(course_name) < 3:
-                        continue
-                    
-                    print(f"  📚 Found course: {course_name}")
-                    
-                    self.db.add_course(course_id, 'RJTA', course_name, course_url)
-                    
-                    activities = self._scrape_course_activities(course_url, course_id)
-                    
-                    courses.append({
-                        'course_id': course_id,
-                        'name': course_name,
-                        'url': course_url,
-                        'activities': activities
-                    })
-                    
-                    time.sleep(2)
-                    
-                except Exception as e:
-                    print(f"  ⚠️ Error processing course: {e}")
-                    continue
             
             print(f"✅ Found {len(courses)} courses")
             
