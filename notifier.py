@@ -4,12 +4,13 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import List, Dict, Any
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Notifier:
-    """Handle email notifications for new LMS activities."""
+    """Handle email and mobile push notifications for new LMS activities."""
     
     def __init__(self):
         self.smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
@@ -17,15 +18,29 @@ class Notifier:
         self.sender_email = os.getenv('EMAIL_SENDER')
         self.sender_password = os.getenv('EMAIL_PASSWORD')
         self.recipient_email = os.getenv('EMAIL_RECIPIENT')
+        
+        # Ntfy.sh configuration
+        self.ntfy_topic = os.getenv('NTFY_TOPIC', '')
+        self.ntfy_server = os.getenv('NTFY_SERVER', 'https://ntfy.sh')
     
     def send_notification(self, activities: List[Dict[str, Any]]) -> bool:
-        """Send email notification about new activities."""
+        """Send email and mobile push notification about new activities."""
         if not activities:
             print("No new activities to notify about.")
             return True
         
+        # Send email notification
+        email_success = self._send_email_notification(activities)
+        
+        # Send mobile push notification
+        ntfy_success = self._send_ntfy_notification(activities)
+        
+        return email_success or ntfy_success
+    
+    def _send_email_notification(self, activities: List[Dict[str, Any]]) -> bool:
+        """Send email notification about new activities."""
         if not all([self.sender_email, self.sender_password, self.recipient_email]):
-            print("Email configuration incomplete. Skipping notification.")
+            print("Email configuration incomplete. Skipping email notification.")
             return False
         
         try:
@@ -297,46 +312,6 @@ Scan completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             
         except Exception as e:
             print(f"❌ Failed to send test email: {e}")
-            return False
-    
-    def send_deadline_reminders(self, deadlines: List[Dict[str, Any]]) -> bool:
-        """Send email notification about upcoming deadlines."""
-        if not deadlines:
-            print("No upcoming deadlines to notify about.")
-            return True
-        
-        if not all([self.sender_email, self.sender_password, self.recipient_email]):
-            print("Email configuration incomplete. Skipping notification.")
-            return False
-        
-        try:
-            # Create message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = f'⏰ Upcoming Deadlines: {len(deadlines)} Due Soon!'
-            msg['From'] = self.sender_email
-            msg['To'] = self.recipient_email
-            
-            # Create email body
-            html_body = self._create_deadline_html_email(deadlines)
-            text_body = self._create_deadline_text_email(deadlines)
-            
-            # Attach both plain text and HTML versions
-            part1 = MIMEText(text_body, 'plain')
-            part2 = MIMEText(html_body, 'html')
-            msg.attach(part1)
-            msg.attach(part2)
-            
-            # Send email
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.sender_email, self.sender_password)
-                server.send_message(msg)
-            
-            print(f"✅ Deadline reminder email sent successfully! ({len(deadlines)} deadlines)")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Failed to send deadline reminder: {e}")
             return False
     
     def _create_deadline_html_email(self, deadlines: List[Dict[str, Any]]) -> str:
@@ -638,3 +613,249 @@ Reminder sent at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         text += "Stay on top of your assignments and never miss a deadline!\n"
         
         return text
+    
+    def _send_ntfy_notification(self, activities: List[Dict[str, Any]]) -> bool:
+        """Send mobile push notification via Ntfy.sh about new activities."""
+        if not self.ntfy_topic:
+            print("Ntfy topic not configured. Skipping mobile notification.")
+            return False
+        
+        try:
+            # Group activities by LMS
+            activities_by_lms = {}
+            for activity in activities:
+                lms = activity.get('lms_name', 'Unknown')
+                if lms not in activities_by_lms:
+                    activities_by_lms[lms] = []
+                activities_by_lms[lms].append(activity)
+            
+            # Create summary message
+            message_lines = []
+            for lms, lms_activities in activities_by_lms.items():
+                message_lines.append(f"\n📚 {lms} ({len(lms_activities)} new)")
+                for i, activity in enumerate(lms_activities[:5], 1):  # Show max 5
+                    activity_type = activity.get('activity_type', '').upper()
+                    title = activity.get('title', 'Untitled')
+                    course = activity.get('course_name', '')[:30]  # Truncate
+                    message_lines.append(f"{i}. [{activity_type}] {title}")
+                    if course:
+                        message_lines.append(f"   📖 {course}")
+                
+                if len(lms_activities) > 5:
+                    message_lines.append(f"   ...and {len(lms_activities) - 5} more")
+            
+            message = "\n".join(message_lines)
+            
+            # Send to ntfy.sh
+            response = requests.post(
+                f"{self.ntfy_server}/{self.ntfy_topic}",
+                data=message.encode('utf-8'),
+                headers={
+                    "Title": f"🎓 {len(activities)} New LMS Activities!",
+                    "Priority": "high",
+                    "Tags": "mortar_board,books,bell",
+                    "Click": "https://lms-activity-monitor.onrender.com"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ Mobile push notification sent via Ntfy! ({len(activities)} activities)")
+                return True
+            else:
+                print(f"⚠️ Ntfy notification failed: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to send Ntfy notification: {e}")
+            return False
+    
+    def _send_ntfy_deadline_reminder(self, deadlines: List[Dict[str, Any]]) -> bool:
+        """Send mobile push notification via Ntfy.sh about upcoming deadlines."""
+        if not self.ntfy_topic:
+            print("Ntfy topic not configured. Skipping mobile notification.")
+            return False
+        
+        try:
+            from datetime import timezone, timedelta
+            
+            # Group deadlines by urgency
+            urgent_deadlines = []
+            normal_deadlines = []
+            
+            for deadline in deadlines:
+                deadline_date = deadline.get('deadline_date', '')
+                try:
+                    if deadline_date:
+                        deadline_dt = datetime.fromisoformat(deadline_date.replace('Z', '+00:00'))
+                        now = datetime.now(timezone.utc)
+                        days = (deadline_dt - now).days
+                        
+                        if days <= 1:
+                            urgent_deadlines.append((deadline, days))
+                        else:
+                            normal_deadlines.append((deadline, days))
+                except:
+                    normal_deadlines.append((deadline, None))
+            
+            # Create message
+            message_lines = []
+            
+            if urgent_deadlines:
+                message_lines.append("⚠️ URGENT:")
+                for deadline, days in urgent_deadlines[:3]:
+                    title = deadline.get('title', 'Untitled')[:40]
+                    course = deadline.get('course_name', '')[:30]
+                    if days == 0:
+                        message_lines.append(f"⚡ DUE TODAY: {title}")
+                    elif days == 1:
+                        message_lines.append(f"📅 DUE TOMORROW: {title}")
+                    else:
+                        message_lines.append(f"⚠️ OVERDUE: {title}")
+                    if course:
+                        message_lines.append(f"   📖 {course}")
+            
+            if normal_deadlines:
+                if urgent_deadlines:
+                    message_lines.append("")
+                message_lines.append("📅 Coming up:")
+                for deadline, days in normal_deadlines[:3]:
+                    title = deadline.get('title', 'Untitled')[:40]
+                    course = deadline.get('course_name', '')[:30]
+                    if days is not None:
+                        message_lines.append(f"• {title} (in {days} days)")
+                    else:
+                        message_lines.append(f"• {title}")
+                    if course:
+                        message_lines.append(f"   📖 {course}")
+            
+            if len(deadlines) > 6:
+                message_lines.append(f"\n...and {len(deadlines) - 6} more deadlines")
+            
+            message = "\n".join(message_lines)
+            
+            # Determine priority and tags
+            if urgent_deadlines:
+                priority = "urgent"
+                tags = "warning,alarm_clock,books"
+                title = f"⏰ {len(urgent_deadlines)} URGENT Deadlines!"
+            else:
+                priority = "high"
+                tags = "calendar,books,bell"
+                title = f"📅 {len(deadlines)} Upcoming Deadlines"
+            
+            # Send to ntfy.sh
+            response = requests.post(
+                f"{self.ntfy_server}/{self.ntfy_topic}",
+                data=message.encode('utf-8'),
+                headers={
+                    "Title": title,
+                    "Priority": priority,
+                    "Tags": tags,
+                    "Click": "https://lms-activity-monitor.onrender.com"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ Deadline reminder sent via Ntfy! ({len(deadlines)} deadlines)")
+                return True
+            else:
+                print(f"⚠️ Ntfy notification failed: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to send Ntfy deadline reminder: {e}")
+            return False
+    
+    def send_deadline_reminders(self, deadlines: List[Dict[str, Any]]) -> bool:
+        """Send email and mobile push notification about upcoming deadlines."""
+        if not deadlines:
+            print("No upcoming deadlines to notify about.")
+            return True
+        
+        # Send email notification
+        email_success = self._send_email_deadline_reminder(deadlines)
+        
+        # Send mobile push notification
+        ntfy_success = self._send_ntfy_deadline_reminder(deadlines)
+        
+        return email_success or ntfy_success
+    
+    def _send_email_deadline_reminder(self, deadlines: List[Dict[str, Any]]) -> bool:
+        """Send email notification about upcoming deadlines."""
+        if not all([self.sender_email, self.sender_password, self.recipient_email]):
+            print("Email configuration incomplete. Skipping email notification.")
+            return False
+        
+        try:
+            # Create message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = f'⏰ Upcoming Deadlines: {len(deadlines)} Due Soon!'
+            msg['From'] = self.sender_email
+            msg['To'] = self.recipient_email
+            
+            # Create email body
+            html_body = self._create_deadline_html_email(deadlines)
+            text_body = self._create_deadline_text_email(deadlines)
+            
+            # Attach both plain text and HTML versions
+            part1 = MIMEText(text_body, 'plain')
+            part2 = MIMEText(html_body, 'html')
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            # Send email
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender_email, self.sender_password)
+                server.send_message(msg)
+            
+            print(f"✅ Deadline reminder email sent successfully! ({len(deadlines)} deadlines)")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send deadline reminder email: {e}")
+            return False
+    
+    def send_test_ntfy(self) -> bool:
+        """Send a test notification via Ntfy to verify configuration."""
+        if not self.ntfy_topic:
+            print("❌ Ntfy topic not configured.")
+            return False
+        
+        try:
+            message = """🎉 Success!
+
+Your LMS Activity Monitor mobile notifications are working!
+
+You'll now receive instant push notifications for:
+• New course activities
+• Upcoming deadlines
+• Assignment reminders
+
+All notifications will appear here on your phone! 📱"""
+            
+            response = requests.post(
+                f"{self.ntfy_server}/{self.ntfy_topic}",
+                data=message.encode('utf-8'),
+                headers={
+                    "Title": "✅ LMS Monitor - Mobile Notifications Enabled!",
+                    "Priority": "default",
+                    "Tags": "white_check_mark,mortar_board,bell",
+                    "Click": "https://lms-activity-monitor.onrender.com"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print("✅ Test mobile notification sent successfully via Ntfy!")
+                print(f"   Check your phone's Ntfy app for the message!")
+                return True
+            else:
+                print(f"❌ Ntfy test failed: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to send test Ntfy notification: {e}")
+            return False

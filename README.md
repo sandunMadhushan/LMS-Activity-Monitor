@@ -6,16 +6,18 @@ A web-based system to monitor multiple Moodle LMS instances for new activities, 
 
 - 🔍 **Multi-LMS Support**: Monitor OUSL and Rajarata University Moodle instances
 - 📧 **Email Notifications**: Get detailed notifications about new content
+- 📱 **Mobile Push Notifications**: Get instant alerts on your phone via [Ntfy.sh](https://ntfy.sh) (free, no registration!)
 - 🌐 **Web Dashboard**: View all changes in a user-friendly interface (deployed on Render)
 - 🔄 **Automated Checks**: Runs twice daily (9 AM and 9 PM Sri Lanka Time) via GitHub Actions
 - 📊 **Activity Tracking**: Monitors assignments, resources, forums, quizzes, and more
-- � **Calendar Integration**: Syncs deadlines to your calendar automatically
-- ⏰ **Deadline Reminders**: Get notified about upcoming deadlines
-- �🔐 **Secure**: Credentials stored as GitHub Secrets
+- 📅 **Calendar Integration**: Syncs deadlines to your calendar automatically
+- ⏰ **Deadline Reminders**: Get notified about upcoming deadlines via email and mobile
+- 🔐 **Secure**: Credentials stored as GitHub Secrets
 
 ## 🚀 Quick Start
 
 ### Live Dashboard
+
 Visit the live dashboard at: **https://lms-activity-monitor.onrender.com**
 
 ### Deployment Options
@@ -57,7 +59,30 @@ To send email notifications:
    - Generate a password for "Mail"
    - Use this password in `.env` as `EMAIL_PASSWORD`
 
-### 3. Running Locally
+### 3. Mobile Push Notifications Setup (Optional but Recommended!)
+
+Get **instant notifications on your phone** in under 5 minutes:
+
+#### Quick Setup:
+1. **Install Ntfy app**: [Android (Google Play)](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iOS (App Store)](https://apps.apple.com/us/app/ntfy/id1625396347)
+2. **Subscribe to a unique topic** in the app (e.g., `lms-monitor-xyz789-secret`)
+3. **Add to your `.env` file**:
+   ```bash
+   NTFY_TOPIC=lms-monitor-xyz789-secret
+   NTFY_SERVER=https://ntfy.sh
+   ```
+4. **Done!** You'll now get instant push notifications on your phone 📱
+
+**📖 See [`docs/NTFY_SETUP_GUIDE.md`](docs/NTFY_SETUP_GUIDE.md) for detailed setup instructions with screenshots.**
+
+**🔒 Security Tip**: Use a long, random topic name (e.g., `lms-monitor-abc123def456xyz789-secret`) to keep your notifications private!
+
+**✅ Test it**: After adding to `.env`, use the web dashboard's "Test Mobile Notification" button or run:
+```bash
+curl -d "Hello from LMS Monitor!" ntfy.sh/your-topic-name
+```
+
+### 4. Running Locally
 
 Run the scraper manually:
 
@@ -73,7 +98,7 @@ python app.py
 
 Then visit: `http://localhost:5000`
 
-### 4. GitHub Actions Setup (Automated Scanning)
+### 5. GitHub Actions Setup (Automated Scanning)
 
 The system uses GitHub Actions to automatically scan both Moodle instances twice daily:
 
@@ -88,29 +113,32 @@ The system uses GitHub Actions to automatically scan both Moodle instances twice
    - `EMAIL_SENDER` - Your Gmail address
    - `EMAIL_PASSWORD` - Gmail app password
    - `EMAIL_RECIPIENT` - Email to receive notifications
+   - `NTFY_TOPIC` - Your unique Ntfy topic name (optional - for mobile notifications)
 
-4. **Automated Schedule**: 
+4. **Automated Schedule**:
    - Runs at **9:00 AM Sri Lanka Time** (3:30 AM UTC)
    - Runs at **9:00 PM Sri Lanka Time** (3:30 PM UTC)
-   
 5. **What it does automatically:**
    - ✅ Scans both OUSL and RUSL Moodle sites
    - ✅ Detects new activities and assignments
    - ✅ Sends email notifications for new content
-   - ✅ Sends deadline reminders (7 days in advance)
+   - ✅ Sends mobile push notifications (if configured)
+   - ✅ Sends deadline reminders (7 days in advance) via email and mobile
    - ✅ Updates the database in the repository
    - ✅ Uploads database as workflow artifact
 
-### 5. Render Deployment (Web Dashboard)
+### 6. Render Deployment (Web Dashboard)
 
 The web dashboard is deployed on Render.com for 24/7 access:
 
 1. **Files already configured:**
+
    - `render.yaml` - Render service configuration
    - `runtime.txt` - Python 3.11.9 runtime
    - `requirements.txt` - Updated with gunicorn and production dependencies
 
 2. **Deploy to Render:**
+
    - Connect your GitHub repository to Render
    - Render will auto-deploy from the `master` branch
    - No environment variables needed (uses database from GitHub)
@@ -124,13 +152,14 @@ The web dashboard is deployed on Render.com for 24/7 access:
 
 **See `docs/DEPLOYMENT_GUIDE.md` for detailed deployment instructions.**
 
-### 6. Manual GitHub Actions Run
+### 7. Manual GitHub Actions Run
 
 Go to Actions → LMS Monitor → Run workflow
 
 ## 🔄 How It Works
 
 ### Automated Workflow (GitHub Actions)
+
 1. **Scheduled Trigger**: Runs at 9 AM & 9 PM Sri Lanka Time
 2. **Authentication**: Logs into both OUSL and RUSL Moodle instances
 3. **Course Discovery**: Finds all your enrolled courses
@@ -142,6 +171,7 @@ Go to Actions → LMS Monitor → Run workflow
 9. **Artifact Upload**: Stores database as workflow artifact (90-day retention)
 
 ### Web Dashboard (Render)
+
 1. **Always Online**: Hosted on Render.com for 24/7 access
 2. **Real-time Data**: Uses the latest database from GitHub
 3. **Calendar Sync**: Syncs deadlines to calendar events (Google Calendar compatible)
@@ -166,7 +196,8 @@ Go to Actions → LMS Monitor → Run workflow
 - 📅 Upcoming deadlines (7-day view)
 - 🔍 Search functionality
 - 📧 Test email notifications
-- 🔄 Manual calendar sync
+- � Test mobile push notifications
+- �🔄 Manual calendar sync
 - 🎯 Filter by LMS (OUSL/RUSL)
 
 ## Project Structure
@@ -212,7 +243,7 @@ lms-scraper/
 ├── database.py                 # 💾 Database operations (SQLite)
 ├── calendar_scraper.py         # 📅 Calendar event scraper & deadline extractor
 ├── scheduler.py                # ⏰ Background task scheduler (APScheduler)
-├── notifier.py                 # 📧 Email notification system
+├── notifier.py                 # 📧 Email + mobile push notification system
 │
 ├── start.sh                    # Linux/Mac startup script
 └── start.bat                   # Windows startup script
@@ -225,13 +256,14 @@ lms-scraper/
 - **`database.py`** - SQLite database manager with all CRUD operations (~650 lines)
 - **`calendar_scraper.py`** - iCalendar event fetcher and deadline extractor from text
 - **`scheduler.py`** - APScheduler integration for automated twice-daily scanning
-- **`notifier.py`** - SMTP-based email notification system
+- **`notifier.py`** - Email (SMTP) + mobile push notification system (Ntfy.sh integration)
 
 ### Documentation
 
 All detailed documentation is in the `docs/` folder:
+
 - **Getting Started**: `docs/GETTING_STARTED.md` - New user guide
-- **Setup Guide**: `docs/SETUP_GUIDE.md` - Detailed setup walkthrough  
+- **Setup Guide**: `docs/SETUP_GUIDE.md` - Detailed setup walkthrough
 - **Quick Reference**: `docs/QUICK_REFERENCE.md` - Commands and common tasks
 - **Scheduling**: `docs/SCHEDULING.md` - Auto-scan configuration
 - **Architecture**: `docs/PROJECT_OVERVIEW.md` - System design and architecture
@@ -239,10 +271,12 @@ All detailed documentation is in the `docs/` folder:
 ### Testing
 
 Test scripts are in the `tests/` folder:
+
 - **`test_setup.py`** - Validates environment setup and configuration
 - **`test_course_names.py`** - Tests scraping functionality for both universities
 
 Run tests:
+
 ```bash
 python tests/test_setup.py
 python tests/test_course_names.py
@@ -251,30 +285,45 @@ python tests/test_course_names.py
 ## 🛠️ Troubleshooting
 
 ### Scraper Issues (GitHub Actions)
+
 - Check the Actions tab for detailed logs
 - Make sure credentials are correct in GitHub Secrets
 - Verify Moodle sites are accessible
 - Chrome/ChromeDriver are automatically installed by the workflow
 
 ### Email Issues
+
 - Verify Gmail app password is correct
 - Check if 2FA is enabled on your Google Account
 - Use App Passwords (not your regular password)
 - Check spam folder for notifications
 
+### Mobile Notification Issues
+
+- **Check Ntfy App**: Ensure you're subscribed to the correct topic in the app
+- **Test Topic**: Run `curl -d "Test message" ntfy.sh/your-topic-name` - if you receive this on your phone, the topic works!
+- **Verify `.env`**: Ensure `NTFY_TOPIC` matches your app subscription exactly
+- **Check Server**: Default is `https://ntfy.sh` (no trailing slash)
+- **GitHub Actions**: Add `NTFY_TOPIC` to repository secrets for automated notifications
+
+**📖 See [`docs/NTFY_SETUP_GUIDE.md`](docs/NTFY_SETUP_GUIDE.md) for detailed troubleshooting.**
+
 ### GitHub Actions Issues
+
 - Check Actions tab for error logs
 - Verify all 7 secrets are set correctly
 - Ensure repository has write permissions enabled
 - Database commits require `permissions: contents: write` (already configured)
 
 ### Render Deployment Issues
+
 - Check Render dashboard logs for errors
 - Verify `runtime.txt` specifies Python 3.11.9
 - Database is tracked in git (not blocked by .gitignore)
 - Scan button is disabled on Render (by design)
 
 ### Calendar Sync Issues
+
 - Check that deadlines exist in the database
 - Calendar events are stored in the `deadlines` table with `source='calendar'`
 - Duplicate events are automatically prevented
@@ -292,6 +341,7 @@ python tests/test_course_names.py
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check the GitHub Actions logs (Actions tab)
 2. Review Render deployment logs (Render dashboard)
 3. Check error messages in email notifications
@@ -301,10 +351,12 @@ If you encounter issues:
 
 ## 🚀 Recent Updates
 
+- ✅ **Mobile Push Notifications** - Get instant alerts on your phone via Ntfy.sh!
+- ✅ **Dual Notification System** - Both email and mobile notifications
 - ✅ Deployed to Render.com for 24/7 web access
 - ✅ GitHub Actions scheduled for 9 AM & 9 PM Sri Lanka Time
 - ✅ Added calendar sync functionality
-- ✅ Automated deadline reminders (7 days in advance)
+- ✅ Automated deadline reminders (7 days in advance) via email and mobile
 - ✅ Fixed database tracking in git
 - ✅ Disabled scan button on Render (automated via GitHub Actions)
 - ✅ Added write permissions for workflow commits
@@ -313,6 +365,8 @@ If you encounter issues:
 ## 📚 Documentation
 
 For more detailed information, see the `docs/` folder:
+
+- **`NTFY_SETUP_GUIDE.md`** - Mobile push notifications setup (5-minute guide)
 - **`DEPLOYMENT_GUIDE.md`** - Complete Render + GitHub Actions setup
 - **`GETTING_STARTED.md`** - New user guide
 - **`SETUP_GUIDE.md`** - Detailed setup walkthrough
@@ -326,4 +380,7 @@ MIT License - Feel free to modify and use for your needs!
 ---
 
 **Made with ❤️ for OUSL and Rajarata University students**
+
+```
+
 ```
