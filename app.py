@@ -144,6 +144,29 @@ def test_email():
             'message': f'Error: {str(e)}'
         }), 500
 
+@app.route('/api/test-ntfy', methods=['POST'])
+def test_ntfy():
+    """Send a test mobile push notification."""
+    try:
+        notifier = Notifier()
+        success = notifier.send_test_ntfy()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Test mobile notification sent successfully! Check your phone.'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to send test notification. Check NTFY_TOPIC configuration.'
+            }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
 @app.route('/api/stats')
 def api_stats():
     """Get statistics as JSON."""

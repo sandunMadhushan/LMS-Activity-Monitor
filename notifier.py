@@ -651,7 +651,7 @@ Reminder sent at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                 f"{self.ntfy_server}/{self.ntfy_topic}",
                 data=message.encode('utf-8'),
                 headers={
-                    "Title": f"🎓 {len(activities)} New LMS Activities!",
+                    "Title": f"{len(activities)} New LMS Activities!",
                     "Priority": "high",
                     "Tags": "mortar_board,books,bell",
                     "Click": "https://lms-activity-monitor.onrender.com"
@@ -738,11 +738,11 @@ Reminder sent at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             if urgent_deadlines:
                 priority = "urgent"
                 tags = "warning,alarm_clock,books"
-                title = f"⏰ {len(urgent_deadlines)} URGENT Deadlines!"
+                title = f"{len(urgent_deadlines)} URGENT Deadlines!"
             else:
                 priority = "high"
                 tags = "calendar,books,bell"
-                title = f"📅 {len(deadlines)} Upcoming Deadlines"
+                title = f"{len(deadlines)} Upcoming Deadlines"
             
             # Send to ntfy.sh
             response = requests.post(
@@ -840,7 +840,7 @@ All notifications will appear here on your phone! 📱"""
                 f"{self.ntfy_server}/{self.ntfy_topic}",
                 data=message.encode('utf-8'),
                 headers={
-                    "Title": "✅ LMS Monitor - Mobile Notifications Enabled!",
+                    "Title": "LMS Monitor - Mobile Notifications Enabled!",
                     "Priority": "default",
                     "Tags": "white_check_mark,mortar_board,bell",
                     "Click": "https://lms-activity-monitor.onrender.com"

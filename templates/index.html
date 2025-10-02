@@ -24,6 +24,9 @@ endblock %} {% block content %}
       <button onclick="testEmail()" class="btn btn-secondary">
         <i class="fas fa-envelope"></i> Test Email
       </button>
+      <button onclick="testNtfy()" class="btn btn-secondary">
+        <i class="fas fa-mobile-alt"></i> Test Mobile
+      </button>
     </div>
   </div>
 
@@ -657,6 +660,28 @@ endblock %} {% block content %}
     showNotification("Sending test email...", "info");
 
     fetch("/api/test-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showNotification(data.message, "success");
+        } else {
+          showNotification(data.message, "error");
+        }
+      })
+      .catch((error) => {
+        showNotification("Test failed: " + error.message, "error");
+      });
+  }
+
+  function testNtfy() {
+    showNotification("Sending test mobile notification...", "info");
+
+    fetch("/api/test-ntfy", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
