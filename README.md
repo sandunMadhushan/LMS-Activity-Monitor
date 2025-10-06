@@ -64,6 +64,7 @@ To send email notifications:
 Get **instant notifications on your phone** in under 5 minutes:
 
 #### Quick Setup:
+
 1. **Install Ntfy app**: [Android (Google Play)](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iOS (App Store)](https://apps.apple.com/us/app/ntfy/id1625396347)
 2. **Subscribe to a unique topic** in the app (e.g., `lms-monitor-xyz789-secret`)
 3. **Add to your `.env` file**:
@@ -78,6 +79,7 @@ Get **instant notifications on your phone** in under 5 minutes:
 **🔒 Security Tip**: Use a long, random topic name (e.g., `lms-monitor-abc123def456xyz789-secret`) to keep your notifications private!
 
 **✅ Test it**: After adding to `.env`, use the web dashboard's "Test Mobile Notification" button or run:
+
 ```bash
 curl -d "Hello from LMS Monitor!" ntfy.sh/your-topic-name
 ```
@@ -380,7 +382,3 @@ MIT License - Feel free to modify and use for your needs!
 ---
 
 **Made with ❤️ for OUSL and Rajarata University students**
-
-```
-
-```
