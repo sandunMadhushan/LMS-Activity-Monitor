@@ -46,6 +46,10 @@ ENV/
 *.log
 logs/
 
+# PDF Reports
+reports/
+*.pdf
+
 # Selenium
 geckodriver.log
 chromedriver.log

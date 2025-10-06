@@ -25,6 +25,7 @@ if sys.platform == 'win32':
 from database import Database
 from notifier import Notifier
 from calendar_scraper import CalendarScraper
+from pdf_report import PDFReportGenerator
 
 load_dotenv()
 
@@ -977,6 +978,38 @@ class MoodleScraper:
                     self.notifier.send_deadline_reminders(upcoming_deadlines)
                 else:
                     print("✅ No upcoming deadlines in the next 7 days")
+                
+                # Generate and send PDF report
+                print("\n📄 Generating PDF report...")
+                try:
+                    pdf_generator = PDFReportGenerator()
+                    
+                    # Get data for report
+                    new_activities_for_report = self.db.get_new_activities()
+                    deadlines_for_report = self.db.get_all_upcoming_deadlines(days_ahead=30)
+                    stats = self.db.get_stats()
+                    
+                    # Generate PDF
+                    pdf_path = pdf_generator.generate_report(
+                        new_activities_for_report,
+                        deadlines_for_report,
+                        stats
+                    )
+                    
+                    # Send PDF via email
+                    print("📧 Sending PDF report via email...")
+                    if self.notifier.send_email_with_pdf(
+                        pdf_path,
+                        len(new_activities_for_report),
+                        len(deadlines_for_report)
+                    ):
+                        print("✅ PDF report sent successfully!")
+                    else:
+                        print("⚠️ Failed to send PDF report")
+                    
+                except Exception as pdf_error:
+                    print(f"⚠️ Error generating/sending PDF report: {str(pdf_error)}")
+                
             except Exception as e:
                 print(f"⚠️ Error sending notifications: {str(e)}")
                 import traceback

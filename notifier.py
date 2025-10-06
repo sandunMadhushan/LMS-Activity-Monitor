@@ -1,8 +1,10 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import os
 import requests
 from dotenv import load_dotenv
@@ -312,6 +314,82 @@ Scan completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             
         except Exception as e:
             print(f"❌ Failed to send test email: {e}")
+            return False
+    
+    def send_email_with_pdf(self, pdf_path: str, activities_count: int, deadlines_count: int) -> bool:
+        """
+        Send email with PDF report attachment.
+        
+        Args:
+            pdf_path: Path to the PDF report file
+            activities_count: Number of new activities in the report
+            deadlines_count: Number of upcoming deadlines in the report
+        
+        Returns:
+            True if email sent successfully, False otherwise
+        """
+        if not all([self.sender_email, self.sender_password, self.recipient_email]):
+            print("Email configuration incomplete. Skipping PDF email.")
+            return False
+        
+        if not os.path.exists(pdf_path):
+            print(f"❌ PDF file not found: {pdf_path}")
+            return False
+        
+        try:
+            # Create message
+            msg = MIMEMultipart()
+            msg['Subject'] = f'📊 LMS Activity Report - {activities_count} New Activities, {deadlines_count} Deadlines'
+            msg['From'] = self.sender_email
+            msg['To'] = self.recipient_email
+            
+            # Email body
+            body = f"""
+Hello!
+
+Here's your latest LMS Activity Report from the automated monitoring system.
+
+📊 Report Summary:
+• {activities_count} new activities detected
+• {deadlines_count} upcoming deadlines (next 30 days)
+
+Please find the detailed PDF report attached to this email.
+
+Dashboard: https://lms-activity-monitor.up.railway.app
+
+---
+This is an automated message from LMS Activity Monitor.
+Next scan scheduled for 9 AM or 9 PM Sri Lanka Time.
+            """
+            
+            msg.attach(MIMEText(body, 'plain'))
+            
+            # Attach PDF file
+            with open(pdf_path, 'rb') as pdf_file:
+                pdf_attachment = MIMEBase('application', 'pdf')
+                pdf_attachment.set_payload(pdf_file.read())
+                encoders.encode_base64(pdf_attachment)
+                
+                # Get filename from path
+                filename = os.path.basename(pdf_path)
+                pdf_attachment.add_header(
+                    'Content-Disposition',
+                    f'attachment; filename= {filename}'
+                )
+                
+                msg.attach(pdf_attachment)
+            
+            # Send email
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender_email, self.sender_password)
+                server.send_message(msg)
+            
+            print(f"✅ PDF report email sent successfully! (Report: {filename})")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send PDF report email: {e}")
             return False
     
     def _create_deadline_html_email(self, deadlines: List[Dict[str, Any]]) -> str:
