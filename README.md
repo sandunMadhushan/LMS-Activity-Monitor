@@ -1,13 +1,26 @@
 # LMS Activity Monitor
 
-A web-based system to monitor multiple Moodle LMS instances for new activities, assignments, and course content. Get notifications twice daily about any new additions to your courses. **Now deployed on Render with automated GitHub Actions scanning!**
+A web-based system to monitor multiple Moodle LMS instances for new activities, assignments, and course content. Get notifications twice daily about any new additions to your courses. **Now deployed on Railway & Render with automated GitHub Actions scanning!**
+
+---
+
+## 🌐 Live Deployments
+
+| Platform | Status | Speed | URL |
+|----------|--------|-------|-----|
+| **Railway** | 🟢 Primary | ⚡ Fast | [lms-activity-monitor.up.railway.app](https://lms-activity-monitor.up.railway.app) |
+| **Render** | 🟢 Backup | 🔄 Reliable | [lms-activity-monitor.onrender.com](https://lms-activity-monitor.onrender.com) |
+
+*Both deployments use the same database and are automatically updated via GitHub Actions!*
+
+---
 
 ## 🌟 Features
 
 - 🔍 **Multi-LMS Support**: Monitor OUSL and Rajarata University Moodle instances
 - 📧 **Email Notifications**: Get detailed notifications about new content
 - 📱 **Mobile Push Notifications**: Get instant alerts on your phone via [Ntfy.sh](https://ntfy.sh) (free, no registration!)
-- 🌐 **Web Dashboard**: View all changes in a user-friendly interface (deployed on Render)
+- 🌐 **Web Dashboard**: View all changes in a user-friendly interface (deployed on Railway & Render)
 - 🔄 **Automated Checks**: Runs twice daily (9 AM and 9 PM Sri Lanka Time) via GitHub Actions
 - 📊 **Activity Tracking**: Monitors assignments, resources, forums, quizzes, and more
 - 📅 **Calendar Integration**: Syncs deadlines to your calendar automatically
@@ -18,11 +31,16 @@ A web-based system to monitor multiple Moodle LMS instances for new activities, 
 
 ### Live Dashboard
 
-Visit the live dashboard at: **https://lms-activity-monitor.onrender.com**
+**Two Deployments for Maximum Uptime:**
+
+- **Primary (Railway)**: https://lms-activity-monitor.up.railway.app ⚡ (Fast & Reliable)
+- **Backup (Render)**: https://lms-activity-monitor.onrender.com 🔄 (Alternative)
+
+*Use whichever loads faster!*
 
 ### Deployment Options
 
-1. **Production (Recommended)**: Deployed on Render + GitHub Actions
+1. **Production (Recommended)**: Deployed on Railway + Render + GitHub Actions
 2. **Local Development**: Run locally for testing
 
 ## 📦 Setup Instructions
@@ -129,30 +147,46 @@ The system uses GitHub Actions to automatically scan both Moodle instances twice
    - ✅ Updates the database in the repository
    - ✅ Uploads database as workflow artifact
 
-### 6. Render Deployment (Web Dashboard)
+### 6. Cloud Deployment (Web Dashboard)
 
-The web dashboard is deployed on Render.com for 24/7 access:
+The web dashboard is deployed on **Railway** and **Render** for 24/7 access:
+
+#### Railway (Primary - Faster & More Reliable) ⚡
+
+1. **Visit**: https://railway.app
+2. **Deploy from GitHub**: Connect your repository
+3. **Configure**: Add environment variables (EMAIL_SENDER, EMAIL_PASSWORD, etc.)
+4. **Live URL**: https://lms-activity-monitor.up.railway.app
+
+**Benefits:**
+- ⚡ Fast cold starts (2-5 seconds)
+- ✅ Better uptime and reliability
+- 🚀 No sleep on free tier
+
+**See `docs/RAILWAY_QUICKSTART.md` for 5-minute setup guide.**
+
+#### Render (Backup) 🔄
 
 1. **Files already configured:**
-
    - `render.yaml` - Render service configuration
    - `runtime.txt` - Python 3.11.9 runtime
    - `requirements.txt` - Updated with gunicorn and production dependencies
 
 2. **Deploy to Render:**
-
    - Connect your GitHub repository to Render
    - Render will auto-deploy from the `master` branch
    - No environment variables needed (uses database from GitHub)
 
-3. **Important Notes:**
-   - ⚠️ Scanning is disabled on Render (Chrome/ChromeDriver not available)
-   - ✅ All scanning happens via GitHub Actions
-   - ✅ Dashboard displays data from the GitHub-updated database
-   - ✅ Calendar sync works on Render
-   - ✅ Free tier sleeps after 15 minutes of inactivity
+3. **Live URL**: https://lms-activity-monitor.onrender.com
 
-**See `docs/DEPLOYMENT_GUIDE.md` for detailed deployment instructions.**
+**Important Notes:**
+- ⚠️ Scanning is disabled on both platforms (Chrome/ChromeDriver not available)
+- ✅ All scanning happens via GitHub Actions
+- ✅ Dashboard displays data from the GitHub-updated database
+- ✅ Calendar sync works on both platforms
+- ✅ Both platforms use the same database from GitHub
+
+**See `docs/DEPLOYMENT_GUIDE.md` for Render setup and `docs/DEPLOYMENT_COMPARISON.md` for platform comparison.**
 
 ### 7. Manual GitHub Actions Run
 
@@ -313,16 +347,28 @@ python tests/test_course_names.py
 ### GitHub Actions Issues
 
 - Check Actions tab for error logs
-- Verify all 7 secrets are set correctly
+- Verify all 8 secrets are set correctly (including `NTFY_TOPIC`)
 - Ensure repository has write permissions enabled
 - Database commits require `permissions: contents: write` (already configured)
 
-### Render Deployment Issues
+### Cloud Deployment Issues
 
+**Railway:**
+- Check Railway dashboard → Deployments → View Logs
+- Verify environment variables are set in Variables tab
+- Railway uses dynamic PORT (auto-detected by app)
+- Scan button disabled (correct - GitHub Actions handles this)
+
+**Render:**
 - Check Render dashboard logs for errors
 - Verify `runtime.txt` specifies Python 3.11.9
 - Database is tracked in git (not blocked by .gitignore)
-- Scan button is disabled on Render (by design)
+- Scan button disabled (correct - GitHub Actions handles this)
+
+**If Both Are Slow:**
+- Use whichever loads faster at the moment
+- Both platforms use the same database from GitHub
+- Consider running locally: `python app.py`
 
 ### Calendar Sync Issues
 
@@ -345,7 +391,7 @@ python tests/test_course_names.py
 If you encounter issues:
 
 1. Check the GitHub Actions logs (Actions tab)
-2. Review Render deployment logs (Render dashboard)
+2. Review Railway or Render deployment logs (dashboard)
 3. Check error messages in email notifications
 4. Ensure all dependencies are installed (`requirements.txt`)
 5. Verify Moodle sites are accessible from your network
@@ -353,9 +399,10 @@ If you encounter issues:
 
 ## 🚀 Recent Updates
 
+- ✅ **Railway Deployment** - Added fast & reliable backup deployment platform!
+- ✅ **Dual Platform Strategy** - Deployed on both Railway (primary) and Render (backup)
 - ✅ **Mobile Push Notifications** - Get instant alerts on your phone via Ntfy.sh!
 - ✅ **Dual Notification System** - Both email and mobile notifications
-- ✅ Deployed to Render.com for 24/7 web access
 - ✅ GitHub Actions scheduled for 9 AM & 9 PM Sri Lanka Time
 - ✅ Added calendar sync functionality
 - ✅ Automated deadline reminders (7 days in advance) via email and mobile
@@ -368,8 +415,14 @@ If you encounter issues:
 
 For more detailed information, see the `docs/` folder:
 
-- **`NTFY_SETUP_GUIDE.md`** - Mobile push notifications setup (5-minute guide)
+### Deployment Guides:
+- **`RAILWAY_QUICKSTART.md`** - Railway deployment (5-minute setup) ⚡
+- **`RAILWAY_DEPLOYMENT.md`** - Complete Railway deployment guide
+- **`DEPLOYMENT_COMPARISON.md`** - Railway vs Render vs other platforms
 - **`DEPLOYMENT_GUIDE.md`** - Complete Render + GitHub Actions setup
+
+### Feature Guides:
+- **`NTFY_SETUP_GUIDE.md`** - Mobile push notifications setup (5-minute guide)
 - **`GETTING_STARTED.md`** - New user guide
 - **`SETUP_GUIDE.md`** - Detailed setup walkthrough
 - **`SCHEDULING.md`** - Auto-scan configuration

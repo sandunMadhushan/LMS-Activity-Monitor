@@ -56,8 +56,8 @@ def index():
                         deadline['course_name'] = course['course_name']
                         break
     
-    # Check if running on Render (to disable scan button)
-    is_render = os.getenv('RENDER') is not None
+    # Check if running on Render or Railway (to disable scan button)
+    is_render = os.getenv('RENDER') is not None or os.getenv('RAILWAY_ENVIRONMENT') is not None
     
     return render_template('index.html', 
                           stats=stats,
@@ -98,12 +98,12 @@ def activities():
 @app.route('/api/scan', methods=['POST'])
 def trigger_scan():
     """Trigger a manual scan."""
-    # Disable manual scanning on Render (Chrome not available)
-    # Render sets RENDER=true environment variable
-    if os.getenv('RENDER'):
+    # Disable manual scanning on Render/Railway (Chrome not available)
+    if os.getenv('RENDER') or os.getenv('RAILWAY_ENVIRONMENT'):
+        platform = 'Render' if os.getenv('RENDER') else 'Railway'
         return jsonify({
             'success': False,
-            'message': 'Manual scanning is disabled on Render. GitHub Actions handles automated scanning twice daily.'
+            'message': f'Manual scanning is disabled on {platform}. GitHub Actions handles automated scanning twice daily.'
         }), 403
     
     try:
