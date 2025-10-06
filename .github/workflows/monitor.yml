@@ -108,9 +108,31 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          # Pull latest changes first to avoid conflicts
+          git pull --rebase origin master || echo "No remote changes to pull"
+          
+          # Add and commit database
           git add -f lms_data.db
-          git diff --staged --quiet || git commit -m "Update LMS database - $(date '+%Y-%m-%d %H:%M:%S')"
-          git push || echo "Nothing to push"
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update LMS database - $(date '+%Y-%m-%d %H:%M:%S')"
+            
+            # Try to push, retry if it fails
+            for i in 1 2 3; do
+              if git push origin master; then
+                echo "Successfully pushed database update"
+                break
+              else
+                echo "Push failed, attempt $i/3"
+                git pull --rebase origin master
+                sleep 2
+              fi
+            done
+          fi
 
       - name: Notify on failure
         if: failure()
