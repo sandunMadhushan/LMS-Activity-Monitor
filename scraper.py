@@ -748,10 +748,151 @@ class MoodleScraper:
             
             print(f"    Found {len(activities)} activities")
             
+            # Now scrape forum posts for any forum activities found
+            forum_posts = self._scrape_forum_posts(course_url, course_id, activities, lms_name)
+            activities.extend(forum_posts)
+            
         except Exception as e:
             print(f"  ❌ Error scraping course activities: {e}")
         
         return activities
+    
+    def _scrape_forum_posts(self, course_url: str, course_id: str, 
+                           activities: List[Dict], lms_name: str) -> List[Dict[str, Any]]:
+        """Scrape forum discussions/announcements from forum activities."""
+        forum_posts = []
+        
+        # Find all forum activities
+        forums = [a for a in activities if a['type'] == 'forum']
+        
+        if not forums:
+            return forum_posts
+        
+        print(f"    🔍 Checking {len(forums)} forum(s) for new posts...")
+        
+        for forum in forums:
+            try:
+                forum_url = forum['url']
+                forum_title = forum['title']
+                
+                # Visit the forum
+                self.driver.get(forum_url)
+                time.sleep(2)
+                
+                soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+                
+                # Find discussion/announcement items
+                # Moodle uses different selectors for discussions
+                discussions = []
+                
+                # Try standard discussion table
+                discussion_table = soup.find('table', class_=re.compile(r'discussion|forumheaderlist'))
+                if discussion_table:
+                    rows = discussion_table.find_all('tr', class_=re.compile(r'discussion'))
+                    for row in rows:
+                        try:
+                            # Find discussion link
+                            link = row.find('a', href=re.compile(r'/mod/forum/discuss\.php'))
+                            if not link:
+                                continue
+                            
+                            post_title = link.get_text(strip=True)
+                            post_url = link.get('href')
+                            
+                            # Make URL absolute
+                            if post_url.startswith('/'):
+                                base_url = forum_url.split('/mod/forum')[0]
+                                post_url = base_url + post_url
+                            
+                            # Try to find author and date
+                            author = ''
+                            post_date = ''
+                            
+                            author_cell = row.find('td', class_=re.compile(r'author|picture'))
+                            if author_cell:
+                                author_link = author_cell.find('a')
+                                if author_link:
+                                    author = author_link.get_text(strip=True)
+                            
+                            date_cell = row.find('td', class_=re.compile(r'lastpost|created'))
+                            if date_cell:
+                                post_date = date_cell.get_text(strip=True)
+                            
+                            discussions.append({
+                                'title': post_title,
+                                'url': post_url,
+                                'author': author,
+                                'date': post_date
+                            })
+                        except Exception as e:
+                            continue
+                
+                # Alternative: Try list-based forums (newer Moodle versions)
+                if not discussions:
+                    discussion_list = soup.find_all('div', class_=re.compile(r'discussion-container'))
+                    for disc_div in discussion_list:
+                        try:
+                            link = disc_div.find('a', href=re.compile(r'/mod/forum/discuss\.php'))
+                            if not link:
+                                continue
+                            
+                            post_title = link.get_text(strip=True)
+                            post_url = link.get('href')
+                            
+                            if post_url.startswith('/'):
+                                base_url = forum_url.split('/mod/forum')[0]
+                                post_url = base_url + post_url
+                            
+                            discussions.append({
+                                'title': post_title,
+                                'url': post_url,
+                                'author': '',
+                                'date': ''
+                            })
+                        except:
+                            continue
+                
+                # Process each discussion as an activity
+                for disc in discussions:
+                    try:
+                        # Create a unique ID for this forum post
+                        post_title_full = f"{forum_title}: {disc['title']}"
+                        activity_id = self.generate_activity_id(course_id, post_title_full, 'forum_post')
+                        
+                        # Add to database
+                        is_new = self.db.add_activity(
+                            activity_id=activity_id,
+                            course_id=course_id,
+                            activity_type='forum_post',
+                            title=post_title_full,
+                            description=f"Posted by {disc['author']}" if disc['author'] else "Forum discussion",
+                            url=disc['url'],
+                            deadline=None
+                        )
+                        
+                        if is_new:
+                            print(f"      🆕 New post: {disc['title']}")
+                            forum_posts.append({
+                                'activity_id': activity_id,
+                                'type': 'forum_post',
+                                'title': post_title_full,
+                                'url': disc['url'],
+                                'description': f"Posted by {disc['author']}" if disc['author'] else "Forum discussion",
+                                'deadline': None,
+                                'is_new': True
+                            })
+                    except Exception as e:
+                        print(f"      ⚠️ Error processing forum post: {e}")
+                        continue
+                
+                if discussions:
+                    print(f"      Found {len(discussions)} discussions ({len([p for p in forum_posts if p.get('is_new')])} new)")
+                
+            except Exception as e:
+                print(f"    ⚠️ Error scraping forum {forum.get('title', 'Unknown')}: {e}")
+                continue
+        
+        return forum_posts
     
     def run_full_scan(self):
         """Run a complete scan of all LMS instances."""
