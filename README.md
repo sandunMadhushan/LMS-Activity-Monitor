@@ -20,6 +20,7 @@ A web-based system to monitor multiple Moodle LMS instances for new activities, 
 - 🔍 **Multi-LMS Support**: Monitor OUSL and Rajarata University Moodle instances
 - 📧 **Email Notifications**: Get detailed notifications about new content
 - 📱 **Mobile Push Notifications**: Get instant alerts on your phone via [Ntfy.sh](https://ntfy.sh) (free, no registration!)
+- 📄 **PDF Reports**: Beautiful PDF reports with new activities emailed as attachments
 - 🌐 **Web Dashboard**: View all changes in a user-friendly interface (deployed on Railway & Render)
 - 🔄 **Automated Checks**: Runs twice daily (9 AM and 9 PM Sri Lanka Time) via GitHub Actions
 - 📊 **Activity Tracking**: Monitors assignments, resources, forums, quizzes, and more
@@ -142,9 +143,10 @@ The system uses GitHub Actions to automatically scan both Moodle instances twice
    - ✅ Scans both OUSL and RUSL Moodle sites
    - ✅ Detects new activities and assignments
    - ✅ Sends email notifications for new content
+   - ✅ Generates and emails PDF reports with new activities
    - ✅ Sends mobile push notifications (if configured)
    - ✅ Sends deadline reminders (7 days in advance) via email and mobile
-   - ✅ Updates the database in the repository
+   - ✅ Updates the database in the repository (with Sri Lanka time timestamps)
    - ✅ Uploads database as workflow artifact
 
 ### 6. Cloud Deployment (Web Dashboard)
@@ -201,10 +203,11 @@ Go to Actions → LMS Monitor → Run workflow
 3. **Course Discovery**: Finds all your enrolled courses
 4. **Content Scraping**: Extracts all activities, assignments, resources using Selenium + Chrome
 5. **Change Detection**: Compares with previous scan to find new items
-6. **Notifications**: Sends email with details of new content
-7. **Deadline Check**: Identifies upcoming deadlines (next 7 days) and sends reminders
-8. **Database Update**: Commits updated database back to GitHub repository
-9. **Artifact Upload**: Stores database as workflow artifact (90-day retention)
+6. **PDF Report Generation**: Creates a professional PDF report with all new activities and upcoming deadlines
+7. **Notifications**: Sends email with details of new content and PDF report attachment
+8. **Deadline Check**: Identifies upcoming deadlines (next 7 days) and sends reminders
+9. **Database Update**: Commits updated database back to GitHub repository with Sri Lanka time (UTC+5:30)
+10. **Artifact Upload**: Stores database as workflow artifact (90-day retention)
 
 ### Web Dashboard (Render)
 
@@ -280,6 +283,7 @@ lms-scraper/
 ├── calendar_scraper.py         # 📅 Calendar event scraper & deadline extractor
 ├── scheduler.py                # ⏰ Background task scheduler (APScheduler)
 ├── notifier.py                 # 📧 Email + mobile push notification system
+├── pdf_report.py               # 📄 PDF report generator with activities & deadlines
 │
 ├── start.sh                    # Linux/Mac startup script
 └── start.bat                   # Windows startup script
@@ -293,6 +297,7 @@ lms-scraper/
 - **`calendar_scraper.py`** - iCalendar event fetcher and deadline extractor from text
 - **`scheduler.py`** - APScheduler integration for automated twice-daily scanning
 - **`notifier.py`** - Email (SMTP) + mobile push notification system (Ntfy.sh integration)
+- **`pdf_report.py`** - Professional PDF report generator with ReportLab (~400 lines)
 
 ### Documentation
 
@@ -399,6 +404,9 @@ If you encounter issues:
 
 ## 🚀 Recent Updates
 
+- ✅ **PDF Reports** - Professional PDF reports with new activities emailed as attachments (ReportLab)
+- ✅ **Sri Lanka Time Commits** - Database commits now show correct Sri Lanka time (UTC+5:30)
+- ✅ **Python 3.13 Compatible** - Updated dependencies for latest Python version
 - ✅ **Railway Deployment** - Added fast & reliable backup deployment platform!
 - ✅ **Dual Platform Strategy** - Deployed on both Railway (primary) and Render (backup)
 - ✅ **Mobile Push Notifications** - Get instant alerts on your phone via Ntfy.sh!
