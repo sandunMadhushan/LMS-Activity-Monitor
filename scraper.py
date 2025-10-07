@@ -955,16 +955,48 @@ class MoodleScraper:
             # Send notifications if there are new activities (moved to finally block)
             try:
                 if results['total_new_activities'] > 0:
-                    print(f"\n📧 Sending notification for {results['total_new_activities']} new activities...")
+                    print(f"\n📧 Processing notifications for {results['total_new_activities']} new activities...")
                     new_activities = self.db.get_new_activities()
                     
+                    # Generate and send PDF report FIRST (before marking as notified)
+                    print("\n📄 Generating PDF report...")
+                    try:
+                        pdf_generator = PDFReportGenerator()
+                        
+                        # Get data for report (activities are still marked as is_new=1)
+                        deadlines_for_report = self.db.get_all_upcoming_deadlines(days_ahead=30)
+                        stats = self.db.get_stats()
+                        
+                        # Generate PDF
+                        pdf_path = pdf_generator.generate_report(
+                            new_activities,  # Use the new_activities we already fetched
+                            deadlines_for_report,
+                            stats
+                        )
+                        
+                        # Send PDF via email
+                        print("📧 Sending PDF report via email...")
+                        if self.notifier.send_email_with_pdf(
+                            pdf_path,
+                            len(new_activities),
+                            len(deadlines_for_report)
+                        ):
+                            print("✅ PDF report sent successfully!")
+                        else:
+                            print("⚠️ Failed to send PDF report")
+                        
+                    except Exception as pdf_error:
+                        print(f"⚠️ Error generating/sending PDF report: {str(pdf_error)}")
+                    
+                    # Now send regular text notification
+                    print("\n📧 Sending text notifications...")
                     if self.notifier.send_notification(new_activities):
-                        # Mark as notified
+                        # Mark as notified AFTER both PDF and text notifications are sent
                         activity_ids = [a['activity_id'] for a in new_activities]
                         self.db.mark_activities_as_notified(activity_ids)
-                        print("✅ Notifications sent and activities marked as notified")
+                        print("✅ All notifications sent and activities marked as notified")
                     else:
-                        print("⚠️ Failed to send notifications")
+                        print("⚠️ Failed to send text notifications")
                 else:
                     print("\n✅ No new activities found.")
                 
@@ -978,37 +1010,6 @@ class MoodleScraper:
                     self.notifier.send_deadline_reminders(upcoming_deadlines)
                 else:
                     print("✅ No upcoming deadlines in the next 7 days")
-                
-                # Generate and send PDF report
-                print("\n📄 Generating PDF report...")
-                try:
-                    pdf_generator = PDFReportGenerator()
-                    
-                    # Get data for report
-                    new_activities_for_report = self.db.get_new_activities()
-                    deadlines_for_report = self.db.get_all_upcoming_deadlines(days_ahead=30)
-                    stats = self.db.get_stats()
-                    
-                    # Generate PDF
-                    pdf_path = pdf_generator.generate_report(
-                        new_activities_for_report,
-                        deadlines_for_report,
-                        stats
-                    )
-                    
-                    # Send PDF via email
-                    print("📧 Sending PDF report via email...")
-                    if self.notifier.send_email_with_pdf(
-                        pdf_path,
-                        len(new_activities_for_report),
-                        len(deadlines_for_report)
-                    ):
-                        print("✅ PDF report sent successfully!")
-                    else:
-                        print("⚠️ Failed to send PDF report")
-                    
-                except Exception as pdf_error:
-                    print(f"⚠️ Error generating/sending PDF report: {str(pdf_error)}")
                 
             except Exception as e:
                 print(f"⚠️ Error sending notifications: {str(e)}")
